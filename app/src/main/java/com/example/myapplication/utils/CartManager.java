@@ -1,131 +1,75 @@
 package com.example.myapplication.utils;
 
 import com.example.myapplication.model.CartModel;
-import com.example.myapplication.model.ProductModel;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class CartManager {
 
     private static CartManager instance;
-    private final List<CartModel> items = new ArrayList<>();
+    private final ArrayList<CartModel> items = new ArrayList<>();
 
-    private CartManager() {
-    }
+    private CartManager() {}
 
     public static CartManager getInstance() {
         if (instance == null) instance = new CartManager();
         return instance;
     }
 
-    public void addToCart(ProductModel product) {
-        for (CartModel item : items) {
-            if (item.getItemId() != null && item.getItemId().equals(product.getItemId())) {
-                item.setQuantity(item.getQuantity() + 1);
-                return;
-            }
-        }
-        items.add(new CartModel(product));
-    }
-
-    public void addOrUpdate(ProductModel product) {
-        addToCart(product);
-    }
-
-    public void remove(CartModel item) {
-        items.remove(item);
-    }
-
-    public void removeById(String itemId) {
-        for (CartModel item : items) {
-            if (item.getItemId() != null && item.getItemId().equals(itemId)) {
-                items.remove(item);
-                return;
+    /** Replace list with fresh API data */
+    public void setCartItems(ArrayList<CartModel> newItems) {
+        items.clear();
+        if (newItems != null) {
+            items.addAll(newItems);
+            for (CartModel m : items) {
+                m.setSelected(true);
+                // sync uiQty from API quantity
+                try { m.setUiQty(Integer.parseInt(m.getQuantity())); }
+                catch (Exception e) { m.setUiQty(1); }
             }
         }
     }
 
-    public List<CartModel> getItems() {
-        return items;
+    public ArrayList<CartModel> getCartItems() { return items; }
+
+    public int getTotalCount() { return items.size(); }
+
+    public void selectAll(boolean select) {
+        for (CartModel m : items) m.setSelected(select);
     }
 
-    public ArrayList<CartModel> getCartItems() {
-        return new ArrayList<>(items);
-    }
-
-    public int getTotalCount() {
-        int count = 0;
-        for (CartModel i : items) count += i.getQuantity();
-        return count;
-    }
-
-    public int getQtyForItem(String itemId) {
-        if (itemId == null) return 0;
-        for (CartModel item : items) {
-            if (itemId.equals(item.getItemId())) return item.getQuantity();
-        }
-        return 0;
-    }
-
-    public double getSubtotal() {
-        double total = 0;
-        for (CartModel i : items) {
-            if (i.isSelected()) {
-                total += i.getPrice() * i.getQuantity();
-            }
-        }
-        return total;
-    }
-
-    public double getGstTotal() {
-        double total = 0;
-        for (CartModel i : items) {
-            if (i.isSelected()) {
-                total += i.getGstAmount() * i.getQuantity();
-            }
-        }
-        return total;
-    }
-
-    public double getSelectedSubtotal() {
-        return getSubtotal();
-    }
-
-    public double getShipping() {
-        return 0;
-    }
-
-    public double getGrandTotal() {
-        return getSubtotal() + getGstTotal() + getShipping();
+    public boolean isAllSelected() {
+        if (items.isEmpty()) return false;
+        for (CartModel m : items) if (!m.isSelected()) return false;
+        return true;
     }
 
     public int getSelectedCount() {
         int c = 0;
-        for (CartModel i : items) {
-            if (i.isSelected()) c++;
-        }
+        for (CartModel m : items) if (m.isSelected()) c++;
         return c;
     }
 
-    public void selectAll(boolean select) {
-        for (CartModel i : items) {
-            i.setSelected(select);
-        }
+    public double getSubtotal() {
+        double t = 0;
+        for (CartModel m : items) if (m.isSelected()) t += m.getLineTotal();
+        return t;
     }
 
-    public boolean isAllSelected() {
-        for (CartModel i : items) {
-            if (!i.isSelected()) return false;
-        }
-        return !items.isEmpty();
+    public double getGstTotal() {
+        double t = 0;
+        for (CartModel m : items) if (m.isSelected()) t += m.getGstDouble() * m.getUiQty();
+        return t;
     }
 
-    public void clear() {
-        items.clear();
+    public double getGrandTotal()  { return getSubtotal() + getGstTotal(); }
+    public double getMrpTotal()    {
+        double t = 0;
+        for (CartModel m : items) if (m.isSelected()) t += m.getLineMrp();
+        return t;
     }
+    public double getSavings()     { return getMrpTotal() - getSubtotal(); }
+    public double getShipping()    { return 0; }
 
-    public void clearCart() {
-        items.clear();
-    }
+    public void clearCart() { items.clear(); }
 }

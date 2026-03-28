@@ -19,13 +19,17 @@
             android:name=".CheckoutScreen"
             android:exported="false" />
         <activity
-            android:name=".CartScreen"
+            android:name=".activity.CartScreen"
             android:exported="false" />
         <activity
-            android:name=".ProductDetailScreen"
+            android:name=".activity.ProductDetailScreen"
             android:exported="false" />
         <activity
             android:name=".activity.ProductListingScreen"
+            android:exported="false" />
+
+        <activity
+            android:name=".activity.WishlistScreen"
             android:exported="false" />
 
         <meta-data
@@ -36,11 +40,9 @@
             android:name=".activity.GstVerifyScreen"
             android:exported="false" />
         <activity
-            android:name=".activity.AccountActivity"
+            android:name=".activity.AccountScreen"
             android:exported="false" />
-        <activity
-            android:name=".activity.CartActivity"
-            android:exported="false" />
+
         <activity
             android:name=".activity.OrdersActivity"
             android:exported="false" />

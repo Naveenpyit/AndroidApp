@@ -13,7 +13,7 @@ public class ProductModel {
     @SerializedName("c_random")
     private String random;
 
-    @SerializedName("n_item_id")
+    @SerializedName("id")
     private String itemId;
 
     @SerializedName("n_category")
@@ -32,7 +32,7 @@ public class ProductModel {
     private String discount;
 
     @SerializedName("n_gst")
-    private String gst;
+    private String gstno;
 
     @SerializedName("n_gst_amount")
     private String gstAmount;
@@ -97,7 +97,7 @@ public class ProductModel {
     public String getSellingPrice() { return sellingPrice; }
     public String getMrp()          { return mrp; }
     public String getDiscount()     { return discount; }
-    public String getGst()          { return gst; }
+    public String getGst()          { return gstno; }
     public String getGstAmount()    { return gstAmount; }
     public String getTotalPrice()   { return totalPrice; }
     public String getMoq()          { return moq; }
@@ -123,6 +123,7 @@ public class ProductModel {
     // ── Setters ───────────────────────────────────────────────────────────────
 
     public void setWishlisted(boolean wishlisted) { this.wishlisted = wishlisted; }
+    public void setWishlistId(String wishlistId) { this.wishlistId = wishlistId; }  // ✅ ADD THIS
     public void setName(String name) { this.name = name; }
     public void setSellingPrice(String sellingPrice) { this.sellingPrice = sellingPrice; }
     public void setMrp(String mrp) { this.mrp = mrp; }

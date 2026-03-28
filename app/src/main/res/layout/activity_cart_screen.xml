@@ -112,12 +112,12 @@
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_change_address"
-            android:layout_width="70dp"
-            android:layout_height="32dp"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
             android:text="Change"
-            android:textColor="@color/red_primary"
+            android:textColor="@color/white"
             android:textSize="11sp"
             android:textAllCaps="false"
             android:background="@drawable/btn_outline_red" />

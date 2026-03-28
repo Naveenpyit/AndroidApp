@@ -6,82 +6,56 @@ import java.util.List;
 public class VerifyOtpResponse {
 
     @SerializedName("n_status")
-    private int n_status;
+    private int nStatus;
 
     @SerializedName("c_message")
-    private String c_message;
-
-    @SerializedName("n_user")
-    private String n_user;  // ✅ Add this
+    private String cMessage;
 
     @SerializedName("j_data")
-    private List<TokenData> j_data;
+    private List<TokenData> jData;
 
-    public int getN_status() {
-        return n_status;
+    @SerializedName("n_process_type")
+    private int nProcessType;
+
+    // Getters
+    public int getNStatus() {
+        return nStatus;
     }
 
-    public String getC_message() {
-        return c_message;
+    public String getCMessage() {
+        return cMessage;
     }
 
-    public String getN_user() {
-        return n_user;
+    public List<TokenData> getJData() {
+        return jData;
     }
 
-    public List<TokenData> getJ_data() {
-        return j_data;
+    public int getNProcessType() {
+        return nProcessType;
     }
 
-    public void setN_status(int n_status) {
-        this.n_status = n_status;
-    }
-
-    public void setC_message(String c_message) {
-        this.c_message = c_message;
-    }
-
-    public void setN_user(String n_user) {
-        this.n_user = n_user;
-    }
-
-    public void setJ_data(List<TokenData> j_data) {
-        this.j_data = j_data;
-    }
-
-    // ── Inner class for token data ──
+    // Inner class
     public static class TokenData {
 
         @SerializedName("j_token")
-        private String j_token;
+        private String jToken;
 
         @SerializedName("j_access")
-        private String j_access;
+        private String jAccess;
 
-        public String getJ_token() {
-            return j_token;
+        @SerializedName("j_login")
+        private List<Object> jLogin;
+
+        public String getJToken() {
+            return jToken;
         }
 
-        public String getJ_access() {
-            return j_access;
+        public String getJAccess() {
+            return jAccess;
         }
 
-        public void setJ_token(String j_token) {
-            this.j_token = j_token;
+        public List<Object> getJLogin() {
+            return jLogin;
         }
-
-        public void setJ_access(String j_access) {
-            this.j_access = j_access;
-        }
-    }
-
-    @Override
-    public String toString() {
-        return "VerifyOtpResponse{" +
-                "n_status=" + n_status +
-                ", c_message='" + c_message + '\'' +
-                ", n_user='" + n_user + '\'' +
-                ", j_data=" + j_data +
-                '}';
     }
 }

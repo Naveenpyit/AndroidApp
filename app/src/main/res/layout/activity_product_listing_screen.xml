@@ -49,7 +49,7 @@
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- Search -->
+        <!-- Search — clicking toggles the search bar below the toolbar -->
         <ImageView
             android:id="@+id/btn_search"
             android:layout_width="36dp"
@@ -57,10 +57,13 @@
             android:src="@drawable/search"
             android:tint="@color/white"
             android:padding="6dp"
-            android:layout_marginEnd="4dp" />
+            android:layout_marginEnd="4dp"
+            android:clickable="true"
+            android:focusable="true" />
 
         <!-- Wishlist with badge -->
         <FrameLayout
+            android:id="@+id/wishlist"
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:layout_marginEnd="4dp">
@@ -81,11 +84,13 @@
                 android:textSize="8sp"
                 android:gravity="center"
                 android:background="@drawable/badge_red_circle"
-                android:layout_gravity="top|end" />
+                android:layout_gravity="top|end"
+                android:visibility="gone" />
         </FrameLayout>
 
         <!-- Cart with badge -->
         <FrameLayout
+            android:id="@+id/addtocountcard"
             android:layout_width="36dp"
             android:layout_height="36dp">
 
@@ -105,8 +110,56 @@
                 android:textSize="8sp"
                 android:gravity="center"
                 android:background="@drawable/badge_red_circle"
-                android:layout_gravity="top|end" />
+                android:layout_gravity="top|end"
+                android:visibility="gone" />
         </FrameLayout>
+    </LinearLayout>
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- ── Search Bar (hidden by default, shown when search icon tapped) ── -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <LinearLayout
+        android:id="@+id/search_bar"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:background="@color/white"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:elevation="4dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/search"
+            android:tint="#888888" />
+
+        <EditText
+            android:id="@+id/et_search"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:hint="Search products…"
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:textColorHint="#AAAAAA"
+            android:background="@null"
+            android:singleLine="true"
+            android:imeOptions="actionSearch"
+            android:inputType="text" />
+
+        <!-- Clear 'X' button — visible only when query is non-empty -->
+        <ImageView
+            android:id="@+id/btn_clear_search"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_close"
+            android:tint="#888888"
+            android:visibility="gone" />
     </LinearLayout>
 
     <!-- ── Filter Chips ── -->
@@ -123,7 +176,7 @@
             android:orientation="horizontal"
             android:padding="10dp">
 
-            <!-- Filter count chip (red filled) - CLICKABLE TO OPEN FILTER PANEL -->
+            <!-- Filter count chip (red filled) -->
             <LinearLayout
                 android:id="@+id/chip_filter"
                 android:layout_width="wrap_content"
@@ -149,7 +202,6 @@
                     android:layout_marginStart="4dp" />
             </LinearLayout>
 
-            <!-- Price -->
             <!-- Price -->
             <LinearLayout
                 android:id="@+id/chip_price"
@@ -179,7 +231,7 @@
                     android:layout_marginStart="4dp" />
             </LinearLayout>
 
-            <!-- Sort By -->
+            <!-- Category -->
             <LinearLayout
                 android:id="@+id/chip_sort"
                 android:layout_width="wrap_content"
@@ -208,7 +260,7 @@
                     android:layout_marginStart="4dp" />
             </LinearLayout>
 
-            <!-- Fabric -->
+            <!-- Fit -->
             <LinearLayout
                 android:id="@+id/chip_fabric"
                 android:layout_width="wrap_content"
@@ -237,7 +289,7 @@
                     android:layout_marginStart="4dp" />
             </LinearLayout>
 
-            <!-- Style -->
+            <!-- Tags -->
             <LinearLayout
                 android:id="@+id/chip_style"
                 android:layout_width="wrap_content"
@@ -264,6 +316,8 @@
                     android:tint="#555555"
                     android:layout_marginStart="4dp" />
             </LinearLayout>
+
+            <!-- Section -->
             <LinearLayout
                 android:id="@+id/ll_section_options"
                 android:layout_width="wrap_content"
@@ -289,6 +343,8 @@
                     android:tint="#555555"
                     android:layout_marginStart="4dp" />
             </LinearLayout>
+
+            <!-- Pack -->
             <LinearLayout
                 android:id="@+id/ll_pack_options"
                 android:layout_width="wrap_content"
@@ -302,7 +358,6 @@
                 android:clickable="true"
                 android:foreground="?attr/selectableItemBackground">
                 <TextView
-
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Pack"
@@ -325,7 +380,6 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <!-- ── Products Grid ── -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_products"
             android:layout_width="match_parent"
@@ -333,7 +387,7 @@
             android:padding="6dp"
             android:clipToPadding="false" />
 
-        <!-- ── Filter Drawer (Hidden by default) ── -->
+        <!-- Filter Drawer (hidden by default) -->
         <LinearLayout
             android:id="@+id/filter_drawer"
             android:layout_width="280dp"
@@ -343,7 +397,6 @@
             android:elevation="8dp"
             android:visibility="gone">
 
-            <!-- Filter Header -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
@@ -352,7 +405,6 @@
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp">
-
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -361,7 +413,6 @@
                     android:textColor="@color/white"
                     android:textSize="18sp"
                     android:textStyle="bold" />
-
                 <ImageView
                     android:id="@+id/btn_close_filter"
                     android:layout_width="28dp"
@@ -371,7 +422,6 @@
                     android:padding="4dp" />
             </LinearLayout>
 
-            <!-- Filters RecyclerView -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_filters"
                 android:layout_width="match_parent"
@@ -380,16 +430,12 @@
                 android:padding="12dp"
                 android:clipToPadding="false" />
 
-            <!-- Filter Action Buttons -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:padding="12dp"
-                android:background="#F5F5F5"
-                android:spacing="8dp">
-
-                <!-- Clear Filters Button -->
+                android:background="#F5F5F5">
                 <Button
                     android:id="@+id/btn_clear_filters"
                     android:layout_width="0dp"
@@ -400,8 +446,6 @@
                     android:background="@drawable/btn_outline_red"
                     android:textSize="14sp"
                     android:textStyle="bold" />
-
-                <!-- Apply Filters Button -->
                 <Button
                     android:id="@+id/btn_apply_filters"
                     android:layout_width="0dp"
@@ -415,7 +459,6 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- ── Semi-transparent overlay for filter drawer ── -->
         <View
             android:id="@+id/filter_overlay"
             android:layout_width="match_parent"

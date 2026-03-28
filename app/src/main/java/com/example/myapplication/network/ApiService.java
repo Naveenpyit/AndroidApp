@@ -1,8 +1,11 @@
 package com.example.myapplication.network;
 
 import com.example.myapplication.model.AddCartRequest;
+import com.example.myapplication.model.AddWishlistRequest;
+import com.example.myapplication.model.AddWishlistResponse;
 import com.example.myapplication.model.CommonResponse;
 import com.example.myapplication.model.DeleteCartRequest;
+import com.example.myapplication.model.DeleteWishlistRequest;
 import com.example.myapplication.model.FiltersRequest;
 import com.example.myapplication.model.FiltersResponse;
 import com.example.myapplication.model.HomeProductsRequest;
@@ -13,6 +16,8 @@ import com.example.myapplication.model.ListCategoryRequest;
 import com.example.myapplication.model.ListCategoryResponse;
 import com.example.myapplication.model.ListItemsRequest;
 import com.example.myapplication.model.ListItemsResponse;
+import com.example.myapplication.model.ListWishlistRequest;
+import com.example.myapplication.model.ListWishlistResponse;
 import com.example.myapplication.model.ProductDetailRequest;
 import com.example.myapplication.model.ProductDetailResponse;
 import com.example.myapplication.model.RefreshTokenRequest;
@@ -66,5 +71,14 @@ public interface ApiService {
 
     @POST("update-cart")
     Call<CommonResponse> updateCart(@Body UpdateCartRequest request);
+
+    @POST("add-wishlist")
+    Call<AddWishlistResponse> addWishlist(@Body AddWishlistRequest request);
+
+    @POST("list-wishlist")
+    Call<ListWishlistResponse> listWishlist(@Body ListWishlistRequest request);
+
+    @POST("delete-wishlist")
+    Call<CommonResponse> deleteWishlist(@Body DeleteWishlistRequest request);
 }
 

@@ -12,7 +12,7 @@ public class ListCartResponse {
     private String message;
 
     @SerializedName("j_data")
-    private List<CartItemModel> data;
+    private List<CartModel> data;
 
     // ── Getters ──
     public int getStatus() {
@@ -23,7 +23,7 @@ public class ListCartResponse {
         return message;
     }
 
-    public List<CartItemModel> getData() {
+    public List<CartModel> getData() {
         return data;
     }
 
@@ -36,7 +36,7 @@ public class ListCartResponse {
         this.message = message;
     }
 
-    public void setData(List<CartItemModel> data) {
+    public void setData(List<CartModel> data) {
         this.data = data;
     }
 
