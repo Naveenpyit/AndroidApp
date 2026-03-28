@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_gravity="center"
+        android:gravity="center">
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="30dp"
+            android:outlineSpotShadowColor="@color/black"
+            app:cardCornerRadius="10dp"
+            app:cardBackgroundColor="@color/white"
+            app:cardElevation="2dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="10dp">
+
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <ImageView
+                            android:id="@+id/cvlogo"
+                            android:layout_width="wrap_content"
+                            android:layout_height="100dp"
+                            android:layout_marginTop="30dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/logo" />
+
+                        <TextView
+                            android:id="@+id/tvheading"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="20dp"
+                            android:layout_marginTop="50dp"
+                            android:fontFamily="@font/outfitsemibold"
+                            android:text="@string/enter_mobile_number"
+                            android:textColor="@color/textColor"
+                            android:textSize="20sp" />
+
+                        <TextView
+                            android:id="@+id/txtvsubHeading"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="20dp"
+                            android:layout_marginTop="16dp"
+                            android:layout_marginEnd="20dp"
+                            android:fontFamily="@font/outfitmedium"
+                            android:text="@string/your_number_is_safe_with_us_and_will_only_be_used_for_this_purpose"
+                            android:textColor="@color/subheadingcolor"
+                            android:textSize="14sp" />
+
+                        <LinearLayout
+                            android:id="@+id/phoneInputLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
+                            android:layout_marginStart="20dp"
+                            android:layout_marginTop="16dp"
+                            android:layout_marginEnd="20dp"
+                            android:background="@drawable/login_border"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:id="@+id/tvCountryCode"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="+91"
+                                android:textColor="@color/black"
+                                android:textSize="16sp"
+                                android:fontFamily="@font/outfitmedium"
+                                android:paddingStart="14dp"
+                                android:paddingEnd="8dp" />
+
+                            <View
+                                android:layout_width="1dp"
+                                android:layout_height="30dp"
+                                android:background="@color/subheadingcolor" />
+
+                            <EditText
+                                android:id="@+id/emailEditText"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:background="@android:color/transparent"
+                                android:hint="Mobile Number"
+                                android:imeOptions="actionDone"
+                                android:paddingStart="14dp"
+                                android:paddingEnd="14dp"
+                                android:maxLength="10"
+                                android:textColorHint="@color/subheadingcolor"
+                                android:inputType="phone"
+                                android:textColor="@android:color/black"
+                                android:textSize="16sp"
+                                android:fontFamily="@font/outfitmedium" />
+
+                        </LinearLayout>
+
+                        <ImageView
+                            android:id="@+id/imgv_termscondition"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="20dp"
+                            android:layout_gravity="center"
+                            android:visibility="invisible"
+                            android:src="@drawable/terms_conditions" />
+
+                        <TextView
+                            android:id="@+id/tvAgreement"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textSize="9sp"
+                            android:layout_marginStart="30dp"
+                            android:layout_marginEnd="30dp"
+                            android:gravity="center"
+                            android:layout_marginTop="10dp"
+                            android:lineSpacingExtra="2dp"
+                            android:fontFamily="@font/outfitregular"
+                            android:textColor="#8A8A8A"
+                            android:text="By Processing you agree to Tom Hiddle’s Privacy User Agreement &amp; Terms Conditions" />
+
+                    </LinearLayout>
+
+                </ScrollView>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_submit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="20dp"
+                    app:cornerRadius="8dp"
+                    android:text="@string/get_otp"
+                    android:textSize="16sp"
+                    android:textColor="@color/white"
+                    android:backgroundTint="@color/appcolor"
+                    android:fontFamily="@font/outfitmedium" />
+
+
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+    </LinearLayout>
+
+
+</LinearLayout>

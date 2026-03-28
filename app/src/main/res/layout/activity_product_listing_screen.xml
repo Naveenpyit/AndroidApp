@@ -1,0 +1,440 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:background="#F2F2F2">
+
+    <!-- ── Red Toolbar ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:background="@color/red_primary"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp">
+
+        <ImageView
+            android:id="@+id/btn_back"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/ic_arrow_back"
+            android:tint="@color/white"
+            android:padding="6dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="6dp">
+
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Product Listing"
+                android:textColor="@color/white"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_product_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 Products"
+                android:textColor="#FFCCCC"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Search -->
+        <ImageView
+            android:id="@+id/btn_search"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/search"
+            android:tint="@color/white"
+            android:padding="6dp"
+            android:layout_marginEnd="4dp" />
+
+        <!-- Wishlist with badge -->
+        <FrameLayout
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginEnd="4dp">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_favorite_border"
+                android:tint="@color/white"
+                android:padding="6dp" />
+
+            <TextView
+                android:id="@+id/tv_wishlist_count"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:text="0"
+                android:textColor="@color/white"
+                android:textSize="8sp"
+                android:gravity="center"
+                android:background="@drawable/badge_red_circle"
+                android:layout_gravity="top|end" />
+        </FrameLayout>
+
+        <!-- Cart with badge -->
+        <FrameLayout
+            android:layout_width="36dp"
+            android:layout_height="36dp">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_cart"
+                android:tint="@color/white"
+                android:padding="6dp" />
+
+            <TextView
+                android:id="@+id/tv_cart_count"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:text="0"
+                android:textColor="@color/white"
+                android:textSize="8sp"
+                android:gravity="center"
+                android:background="@drawable/badge_red_circle"
+                android:layout_gravity="top|end" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- ── Filter Chips ── -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:scrollbars="none"
+        android:elevation="3dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="10dp">
+
+            <!-- Filter count chip (red filled) - CLICKABLE TO OPEN FILTER PANEL -->
+            <LinearLayout
+                android:id="@+id/chip_filter"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@drawable/chip_red_bg"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:layout_marginEnd="8dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="02"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_filter"
+                    android:tint="@color/white"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <!-- Price -->
+            <!-- Price -->
+            <LinearLayout
+                android:id="@+id/chip_price"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@drawable/chip_outline_bg"
+                android:paddingStart="14dp"
+                android:paddingEnd="10dp"
+                android:layout_marginEnd="8dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:foreground="?attr/selectableItemBackground">
+                <TextView
+                    android:id="@+id/tv_price_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Price"
+                    android:textColor="#333333"
+                    android:textSize="13sp" />
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_dropdown"
+                    android:tint="#555555"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <!-- Sort By -->
+            <LinearLayout
+                android:id="@+id/chip_sort"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@drawable/chip_outline_bg"
+                android:paddingStart="14dp"
+                android:paddingEnd="10dp"
+                android:layout_marginEnd="8dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:foreground="?attr/selectableItemBackground">
+                <TextView
+                    android:id="@+id/tv_sort_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Category"
+                    android:textColor="#333333"
+                    android:textSize="13sp" />
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_dropdown"
+                    android:tint="#555555"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <!-- Fabric -->
+            <LinearLayout
+                android:id="@+id/chip_fabric"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@drawable/chip_outline_bg"
+                android:paddingStart="14dp"
+                android:paddingEnd="10dp"
+                android:layout_marginEnd="8dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:foreground="?attr/selectableItemBackground">
+                <TextView
+                    android:id="@+id/tv_fabric_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Fit"
+                    android:textColor="#333333"
+                    android:textSize="13sp" />
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_dropdown"
+                    android:tint="#555555"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <!-- Style -->
+            <LinearLayout
+                android:id="@+id/chip_style"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@drawable/chip_outline_bg"
+                android:paddingStart="14dp"
+                android:paddingEnd="10dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:foreground="?attr/selectableItemBackground">
+                <TextView
+                    android:id="@+id/tv_style_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tags"
+                    android:textColor="#333333"
+                    android:textSize="13sp" />
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_dropdown"
+                    android:tint="#555555"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/ll_section_options"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@drawable/chip_outline_bg"
+                android:paddingStart="14dp"
+                android:paddingEnd="10dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:foreground="?attr/selectableItemBackground">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Section"
+                    android:textColor="#333333"
+                    android:textSize="13sp" />
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_dropdown"
+                    android:tint="#555555"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/ll_pack_options"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@drawable/chip_outline_bg"
+                android:paddingStart="14dp"
+                android:paddingEnd="10dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:foreground="?attr/selectableItemBackground">
+                <TextView
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pack"
+                    android:textColor="#333333"
+                    android:textSize="13sp" />
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_dropdown"
+                    android:tint="#555555"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- ── Main Content Container ── -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- ── Products Grid ── -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_products"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="6dp"
+            android:clipToPadding="false" />
+
+        <!-- ── Filter Drawer (Hidden by default) ── -->
+        <LinearLayout
+            android:id="@+id/filter_drawer"
+            android:layout_width="280dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:background="@color/white"
+            android:elevation="8dp"
+            android:visibility="gone">
+
+            <!-- Filter Header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="@color/red_primary"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Filters"
+                    android:textColor="@color/white"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:id="@+id/btn_close_filter"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_close"
+                    android:tint="@color/white"
+                    android:padding="4dp" />
+            </LinearLayout>
+
+            <!-- Filters RecyclerView -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_filters"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:padding="12dp"
+                android:clipToPadding="false" />
+
+            <!-- Filter Action Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:background="#F5F5F5"
+                android:spacing="8dp">
+
+                <!-- Clear Filters Button -->
+                <Button
+                    android:id="@+id/btn_clear_filters"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="Clear"
+                    android:textColor="#FF6B6B"
+                    android:background="@drawable/btn_outline_red"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <!-- Apply Filters Button -->
+                <Button
+                    android:id="@+id/btn_apply_filters"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="Apply"
+                    android:textColor="@color/white"
+                    android:background="@color/red_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ── Semi-transparent overlay for filter drawer ── -->
+        <View
+            android:id="@+id/filter_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#80000000"
+            android:visibility="gone" />
+
+    </FrameLayout>
+
+    <!-- ── Bottom Navigation ── -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        app:itemIconTint="@drawable/bottom_nav_color_selector"
+        app:itemTextColor="@drawable/bottom_nav_color_selector"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/bottom_nav_menu"
+        app:elevation="8dp" />
+
+</LinearLayout>

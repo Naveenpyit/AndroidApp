@@ -1,0 +1,301 @@
+<resources>
+
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="get_started">Get Started</string>
+    <string name="your_number_is_safe_with_us_and_will_only_be_used_for_this_purpose">Your number is safe with us and will only be used for this purpose.</string>
+    <string name="enter_mobile_number">Enter Mobile Number</string>
+    <string name="get_otp">Get Otp</string>
+    <string name="verify">Verify</string>
+
+
+    <string name="terms_condition_text"><![CDATA[By Processing you agree to Tom Hiddle\'s <b><font color="#0066CC">Privacy User Agreement</font></b> & <b><font color="#0066CC">Terms Conditions</font></b>]]></string>
+
+    <!-- Method 2: Alternative format -->
+    <string name="terms_condition_alt">By Processing you agree to Tom Hiddle\'s <b><font color="#0066CC">Privacy User Agreement</font></b> <![CDATA[&]]> <b><font color="#0066CC">Terms Conditions</font></b></string>
+
+    <!-- Method 3: Using span (another option) -->
+    <string name="terms_condition_span"><![CDATA[<font color="#666666">By Processing you agree to Tom Hiddle\'s </font><b><font color="#0066CC">Privacy User Agreement</font></b><font color="#666666"> & </font><b><font color="#0066CC">Terms Conditions</font></b>]]></string>
+
+
+    <string name="phone_number">Phone Number <font color="#FF0000">*</font></string>
+
+    <!-- Placeholders / hints -->
+    <string name="hint_address_type">Select State </string>
+    <string name="hint_state_line">Building name , area , street</string>
+    <string name="hint_pin_code">Enter PIN Code</string>
+    <string name="hint_city">Select City</string>
+    <string name="hint_state">Select State</string>
+    <string name="hint_country">India</string>
+
+
+    <!-- Other -->
+    <string name="current_location">Current Location</string>
+
+    <string name="primary">Primary</string>
+    <string name="tower_a_business_complex_sector_62_nnoida_uttar_pradesh_201301">Tower A, Business Complex, Sector 62\nNoida, Uttar Pradesh - 201301</string>
+
+
+    <!-- Titles -->
+    <string name="title_business_details">Business Details</string>
+
+
+    <!-- Business type options -->
+    <string name="business_type_retailer">Retailer</string>
+    <string name="business_type_retailer_desc">Sell directly to the customers</string>
+    <string name="business_type_wholesaler">Wholesaler</string>
+    <string name="business_type_wholesaler_desc">Sell in bulk quantities</string>
+    <string name="business_type_distributor">Distributor</string>
+    <string name="business_type_distributor_desc">Supply to multiple retailers</string>
+
+    <!-- PAN/GST section -->
+    <string name="provide_any_one">Please provide any one</string>
+
+    <string name="enter_gst_number">Enter GST Number</string>
+    <string name="enter_pan_number">Enter PAN Number</string>
+    <string name="enter_gst_hint">Enter GST Number here..</string>
+    <string name="enter_pan_hint">Enter PAN Number here..</string>
+
+    <!-- Image upload -->
+    <string name="upload_shop_image">Upload a shop image</string>
+
+
+    <string name="cart_title">Cart</string>
+    <string name="deliver_to_label">Deliver to : </string>
+    <string name="deliverlabel">Elango shop , 641899</string>
+    <string name="change">Change</string>
+    <string name="deliver_address">18, Abirami nagar , Mayiladuthurai</string>
+
+    <string name="product_image_desc">Product image</string>
+    <string name="meta_example">Pack : A3   Category : Men   SKU : A3-OS-0358</string>
+
+    <string name="remove">Remove</string>
+    <string name="decrease_qty">Decrease quantity</string>
+    <string name="increase_qty">Increase quantity</string>
+    <string name="quantity">Quantity</string>
+
+    <!-- Price format placeholders -->
+    <string name="price_format">₹%1$.2f</string>
+    <string name="price_breakdown">(%1$s + %2$s GST)</string>
+    <string name="in_stock">In Stock</string>
+    <string name="sku_or_item_code">SKU (or) Item Code :</string>
+    <string name="mrp">₹198.13</string>
+    <string name="what_do_you_think_about_the_price">What do you think about the price?</string>
+    <string name="stay_effortlessly">Stay effortlessly stylish and comfortable with this casual round-neck tee made from 100% premium cotton. Crafted in a single jersey 190 GSM fabric, it offers a soft, breathable feel that’s perfect for all-day wear. Designed for a timeless appeal, this versatile piece works across seasons, making it a must-have wardrobe essential.</string>
+
+    <string name="otp_has_been_sent_to">OTP has been sent to %1$s</string>
+
+
+    <string name="juspay_sdk_"> Juspay SDK Integration Demo </string>
+    <string name="home_screen"> Home Screen</string>
+    <string name="juspay_paym">Juspay Payments SDK should be initiated on this screen.</string>
+    <string name="products">Products</string>
+    <string name="product_1">Product 1</string>
+    <string name="product_2">Product 2</string>
+    <string name="price_rs_1_">Price: Rs. 1/item\nAwesome product description for product one.</string>
+    <string name="checkout_sc">Checkout Screen</string>
+    <string name="call_proces">Call process on HyperServices instance on Checkout Button Click</string>
+    <string name="handle_jusp">Handle Juspay Payments SDK Response</string>
+
+
+    <!-- Button -->
+
+
+    <string name="app_name">Account Setup</string>
+    <string name="back">Back</string>
+
+    <!-- Owner Details -->
+    <string name="owner_details">Owner Details</string>
+    <string name="full_name">Full Name *</string>
+    <string name="enter_your_full_name">Enter your full name</string>
+    <string name="mobile_number">Mobile Number *</string>
+    <string name="mobile_hint">+91 9876543201</string>
+    <string name="email_address">Email Address</string>
+    <string name="enter_your_email_address">Enter your email address</string>
+
+    <!-- Business Details -->
+    <string name="business_details">Business Details</string>
+    <string name="select_business_type">Select Business type *</string>
+    <string name="please_provide_any_one">Please provide any one</string>
+    <string name="pan_number">PAN Number</string>
+    <string name="gst_number">GST Number</string>
+    <string name="enter_gst_number_here">Enter GST Number here...</string>
+    <string name="upload_a_shop_image">Upload a shop image</string>
+    <string name="upload_image">Upload Image</string>
+    <string name="upload">Upload</string>
+
+    <!-- Delivery Address -->
+    <string name="delivery_address">Delivery Address</string>
+    <string name="select_location">Select Location</string>
+    <string name="current_location_text">US Business District, Connaught Place, New Delhi</string>
+    <string name="map">MAP</string>
+
+    <string name="address_details">Address Details</string>
+    <string name="billing_address">Billing Address</string>
+    <string name="address_type">Address Type *</string>
+    <string name="select_address_type">Select address type</string>
+    <string name="address_line">Address Line *</string>
+    <string name="building_name_area_street">Building name, area, street</string>
+    <string name="pin_code">PIN Code *</string>
+    <string name="pin_code_hint">00156</string>
+    <string name="city">City *</string>
+    <string name="select_city">Select City</string>
+    <string name="state">State *</string>
+    <string name="select_state">Select State</string>
+    <string name="country">Country *</string>
+    <string name="select_country">India</string>
+    <string name="saved_addresses">Saved Addresses (2)</string>
+
+    <!-- Common -->
+    <string name="save_continue">Save &amp; Continue</string>
+
+
+    <string-array name="address_types">
+        <item>Select address type</item>
+        <item>Home</item>
+        <item>Office</item>
+        <item>Other</item>
+    </string-array>
+
+    <!-- Cities -->
+    <string-array name="cities">
+        <item>Select City</item>
+        <item>New Delhi</item>
+        <item>Mumbai</item>
+        <item>Bangalore</item>
+        <item>Hyderabad</item>
+        <item>Chennai</item>
+        <item>Kolkata</item>
+        <item>Pune</item>
+        <item>Ahmedabad</item>
+        <item>Jaipur</item>
+        <item>Lucknow</item>
+        <item>Chandigarh</item>
+        <item>Indore</item>
+    </string-array>
+
+    <!-- States -->
+    <string-array name="states">
+        <item>Select State</item>
+        <item>Andhra Pradesh</item>
+        <item>Arunachal Pradesh</item>
+        <item>Assam</item>
+        <item>Bihar</item>
+        <item>Chhattisgarh</item>
+        <item>Delhi</item>
+        <item>Goa</item>
+        <item>Gujarat</item>
+        <item>Haryana</item>
+        <item>Himachal Pradesh</item>
+        <item>Jharkhand</item>
+        <item>Karnataka</item>
+        <item>Kerala</item>
+        <item>Madhya Pradesh</item>
+        <item>Maharashtra</item>
+        <item>Manipur</item>
+        <item>Meghalaya</item>
+        <item>Mizoram</item>
+        <item>Nagaland</item>
+        <item>Odisha</item>
+        <item>Punjab</item>
+        <item>Rajasthan</item>
+        <item>Sikkim</item>
+        <item>Tamil Nadu</item>
+        <item>Telangana</item>
+        <item>Tripura</item>
+        <item>Uttar Pradesh</item>
+        <item>Uttarakhand</item>
+        <item>West Bengal</item>
+    </string-array>
+
+    <!-- Countries -->
+    <string-array name="countries">
+        <item>India</item>
+        <item>USA</item>
+        <item>Canada</item>
+        <item>UK</item>
+        <item>Australia</item>
+        <item>Germany</item>
+        <item>France</item>
+        <item>Japan</item>
+        <item>China</item>
+        <item>Singapore</item>
+    </string-array>
+
+    <!-- Business Types -->
+    <string-array name="business_types">
+        <item>Select Business type</item>
+        <item>Retailer</item>
+        <item>Wholesaler</item>
+        <item>Distributor</item>
+        <item>Manufacturer</item>
+    </string-array>
+
+
+    <string name="signal">Signal</string>
+    <string name="wifi">WiFi</string>
+    <string name="battery">Battery</string>
+    <string name="location">Location</string>
+    <string name="notifications">Notifications</string>
+
+    <!-- Search Bar -->
+    <string name="search_products">Search Products</string>
+    <string name="camera">Camera</string>
+    <string name="scan">Scan</string>
+    <string name="filter">Filter</string>
+
+    <!-- Categories -->
+    <string name="men">Men</string>
+    <string name="women">Women</string>
+    <string name="boy">Boy</string>
+    <string name="girl">Girl</string>
+    <string name="kids">Kids</string>
+
+    <!-- Banners & Sections -->
+    <string name="big_offer">Big Offer</string>
+    <string name="trending_categories">Trending Categories</string>
+    <string name="special_offers">Special Offers</string>
+    <string name="deal_of_month">Deal of the Month</string>
+    <string name="new_arrivals">New Arrivals</string>
+    <string name="bumper_lucky_draw">Bumper Lucky Draw</string>
+    <string name="shop_by_market">Shop By Market</string>
+
+    <!-- Collections -->
+    <string name="men_collections">Men\'s Collections</string>
+    <string name="women_collections">Women\'s Collections</string>
+    <string name="kids_collections">Kids Collections</string>
+
+    <!-- Products -->
+    <string name="product_image">Product Image</string>
+    <string name="category_icon">Category Icon</string>
+    <string name="trending_item">Trending Item</string>
+    <string name="special_offer">Special Offer</string>
+    <string name="market">Market</string>
+    <string name="favorite">Favorite</string>
+    <string name="view_all">View All</string>
+
+    <!-- Filters -->
+    <string name="filter_all">All</string>
+    <string name="filter_5star">5 Star Rated</string>
+    <string name="filter_bestselling">Best Selling</string>
+    <string name="filter_newarrival">New Arrival</string>
+
+    <!-- Buttons & Actions -->
+    <string name="buy_for">Buy for</string>
+    <string name="add_to_cart">Add to Cart</string>
+    <string name="shop_now">SHOP NOW</string>
+    <string name="buy_now">Buy Now</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_cart">Cart</string>
+    <string name="nav_account">Account</string>
+
+    <!-- General -->
+    <string name="loading">Loading...</string>
+    <string name="error">Error</string>
+    <string name="try_again">Try Again</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+
+</resources>

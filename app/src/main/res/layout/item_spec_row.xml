@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- spec_block.xml — Replace the <include> tags in activity_product_detail.xml
+     with this self-contained block inside the Specification LinearLayout.
+     Each row has label on left, value on right. -->
+
+<!-- Paste this INSIDE the Specification LinearLayout, AFTER the "Specification" heading TextView -->
+
+<!-- Style -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="36dp" android:gravity="center_vertical" android:orientation="horizontal">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Style" android:textColor="#777777" android:textSize="13sp"/>
+        <TextView android:id="@+id/tv_spec_style" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" android:textColor="#222222" android:textSize="13sp"/>
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="#EEEEEE"/>
+
+    <!-- Category -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="36dp" android:gravity="center_vertical" android:orientation="horizontal">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Category" android:textColor="#777777" android:textSize="13sp"/>
+        <TextView android:id="@+id/tv_spec_category" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" android:textColor="#222222" android:textSize="13sp"/>
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="#EEEEEE"/>
+
+    <!-- Material -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="36dp" android:gravity="center_vertical" android:orientation="horizontal">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Material" android:textColor="#777777" android:textSize="13sp"/>
+        <TextView android:id="@+id/tv_spec_material" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" android:textColor="#222222" android:textSize="13sp"/>
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="#EEEEEE"/>
+
+    <!-- Fabric -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="36dp" android:gravity="center_vertical" android:orientation="horizontal">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Fabric" android:textColor="#777777" android:textSize="13sp"/>
+        <TextView android:id="@+id/tv_spec_fabric" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" android:textColor="#222222" android:textSize="13sp"/>
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="#EEEEEE"/>
+
+    <!-- Neck -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="36dp" android:gravity="center_vertical" android:orientation="horizontal">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Neck" android:textColor="#777777" android:textSize="13sp"/>
+        <TextView android:id="@+id/tv_spec_neck" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" android:textColor="#222222" android:textSize="13sp"/>
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="#EEEEEE"/>
+
+    <!-- Season -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="36dp" android:gravity="center_vertical" android:orientation="horizontal">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Season" android:textColor="#777777" android:textSize="13sp"/>
+        <TextView android:id="@+id/tv_spec_season" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" android:textColor="#222222" android:textSize="13sp"/>
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="#EEEEEE"/>
+
+    <!-- Color -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="36dp" android:gravity="center_vertical" android:orientation="horizontal">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Color" android:textColor="#777777" android:textSize="13sp"/>
+        <TextView android:id="@+id/tv_spec_color" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" android:textColor="#222222" android:textSize="13sp"/>
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="#EEEEEE"/>
+
+    <!-- Supplier -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="36dp" android:gravity="center_vertical" android:orientation="horizontal">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Supplier" android:textColor="#777777" android:textSize="13sp"/>
+        <TextView android:id="@+id/tv_spec_supplier" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" android:textColor="#222222" android:textSize="13sp"/>
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="#EEEEEE"/>
+
+    <!-- Fit -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="36dp" android:gravity="center_vertical" android:orientation="horizontal">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Fit" android:textColor="#777777" android:textSize="13sp"/>
+        <TextView android:id="@+id/tv_spec_fit" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" android:textColor="#222222" android:textSize="13sp"/>
+    </LinearLayout>
+
+</LinearLayout>

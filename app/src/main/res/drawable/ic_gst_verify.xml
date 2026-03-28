@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="220dp"
+    android:height="220dp"
+    android:viewportWidth="220"
+    android:viewportHeight="220">
+
+    <!-- Phone outline -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="3"
+        android:pathData="M70,30 Q70,20 80,20 L140,20 Q150,20 150,30 L150,190 Q150,200 140,200 L80,200 Q70,200 70,190 Z" />
+
+    <!-- Phone screen area -->
+    <path
+        android:fillColor="#F5F5F5"
+        android:pathData="M76,40 L144,40 L144,185 L76,185 Z" />
+
+    <!-- Document lines on screen -->
+    <path
+        android:fillColor="#DDDDDD"
+        android:pathData="M85,60 L135,60 L135,64 L85,64 Z" />
+    <path
+        android:fillColor="#DDDDDD"
+        android:pathData="M85,72 L130,72 L130,76 L85,76 Z" />
+    <path
+        android:fillColor="#DDDDDD"
+        android:pathData="M85,84 L125,84 L125,88 L85,88 Z" />
+    <path
+        android:fillColor="#DDDDDD"
+        android:pathData="M85,96 L132,96 L132,100 L85,100 Z" />
+    <path
+        android:fillColor="#DDDDDD"
+        android:pathData="M85,108 L118,108 L118,112 L85,112 Z" />
+
+    <!-- Red check circle (verified badge) -->
+    <path
+        android:fillColor="#E41D27"
+        android:pathData="M130,45 A18,18 0 1,1 130,44.99 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M122,45 L128,51 L138,39" />
+
+    <!-- Person silhouette (right side) -->
+    <!-- Head -->
+    <path
+        android:fillColor="#E41D27"
+        android:pathData="M165,100 A10,10 0 1,1 165,99.99 Z" />
+    <!-- Body -->
+    <path
+        android:fillColor="#E41D27"
+        android:pathData="M155,120 Q155,112 165,112 Q175,112 175,120 L178,155 L152,155 Z" />
+    <!-- Arm holding document -->
+    <path
+        android:fillColor="#E41D27"
+        android:strokeColor="#E41D27"
+        android:strokeWidth="1"
+        android:pathData="M155,125 L140,130 L140,160 L152,160 L152,135 L155,133 Z" />
+    <!-- Document in hand -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M128,128 L142,128 L142,162 L128,162 Z" />
+    <path
+        android:fillColor="#DDDDDD"
+        android:pathData="M131,135 L139,135 L139,137 L131,137 Z" />
+    <path
+        android:fillColor="#DDDDDD"
+        android:pathData="M131,141 L139,141 L139,143 L131,143 Z" />
+    <path
+        android:fillColor="#DDDDDD"
+        android:pathData="M131,147 L137,147 L137,149 L131,149 Z" />
+    <!-- Legs -->
+    <path
+        android:fillColor="#333333"
+        android:pathData="M157,155 L155,185 L161,185 L163,165 L165,185 L171,185 L169,155 Z" />
+
+    <!-- Small floating circles (background decoration) -->
+    <path
+        android:fillColor="#F0F0F0"
+        android:pathData="M50,80 A8,8 0 1,1 50,79.99 Z" />
+    <path
+        android:fillColor="#F0F0F0"
+        android:pathData="M45,130 A5,5 0 1,1 45,129.99 Z" />
+    <path
+        android:fillColor="#F0F0F0"
+        android:pathData="M185,90 A6,6 0 1,1 185,89.99 Z" />
+    <path
+        android:fillColor="#F0F0F0"
+        android:pathData="M190,145 A4,4 0 1,1 190,144.99 Z" />
+
+</vector>

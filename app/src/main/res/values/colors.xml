@@ -1,0 +1,178 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Basic -->
+    <color name="black">#000000</color>
+    <color name="appcolor">#E41D27</color>
+    <!-- Gray -->
+    <color name="gray">#808080</color>
+    <color name="light_gray">#D3D3D3</color>
+    <color name="dark_gray">#404040</color>
+
+    <color name="red_primary">#E63946</color>
+    <color name="white">#FFFFFF</color>
+    <color name="text_dark">#1A1A1A</color>
+    <color name="text_light">#999999</color>
+    <color name="gray_light">#F5F5F5</color>
+    <color name="gray_border">#E0E0E0</color>
+
+    <!-- Red -->
+    <color name="red_50">#FFEBEE</color>
+    <color name="red_100">#FFCDD2</color>
+    <color name="red_200">#EF9A9A</color>
+    <color name="red_300">#E57373</color>
+    <color name="red_400">#EF5350</color>
+    <color name="red_500">#F44336</color>
+    <color name="red_600">#E53935</color>
+
+    <!-- Pink -->
+    <color name="pink_200">#F48FB1</color>
+    <color name="pink_500">#E91E63</color>
+
+    <!-- Purple -->
+    <color name="purple_200">#BB86FC</color>
+    <color name="purple_500">#9C27B0</color>
+    <color name="purple_700">#3700B3</color>
+
+    <!-- Blue -->
+    <color name="blue_200">#90CAF9</color>
+    <color name="blue_500">#2196F3</color>
+    <color name="blue_700">#1976D2</color>
+
+    <!-- Cyan -->
+    <color name="cyan_500">#00BCD4</color>
+
+    <!-- Teal -->
+    <color name="teal_200">#03DAC5</color>
+    <color name="teal_700">#018786</color>
+
+    <!-- Green -->
+    <color name="green_200">#A5D6A7</color>
+    <color name="green_500">#4CAF50</color>
+    <color name="green_700">#388E3C</color>
+
+    <!-- Yellow -->
+    <color name="yellow_500">#FFEB3B</color>
+
+    <!-- Orange -->
+    <color name="orange_500">#FF9800</color>
+
+    <!-- Brown -->
+    <color name="brown_500">#795548</color>
+
+
+    <color name="appcolor1">#2377D9</color>
+    <color name="cardbackgroundcolor">#FFF5F6</color>
+    <color name="ActiveIndicator">#D5E3FA</color>
+    <color name="selected_color">#E3F2FD</color>  <!-- Light blue for selected -->
+    <color name="default_color">#FFFFFF</color>
+    <color name="selected_stroke">#2196F3</color>     <!-- Blue stroke -->
+
+    <!-- White for default -->
+
+
+    <color name="primary_red">#E53935</color>
+    <color name="text_primary">#111111</color>
+    <color name="text_secondary">#8A8A8A</color>
+    <color name="divider_light">#EEEEEE</color>
+
+    <color name="card_border">#DADCE0</color>
+    <color name="card_bg">#FFFFFF</color>
+    <color name="summary_bg">#FAFAFA</color>
+    <color name="balance_bg">#F1F3F4</color>
+
+    <color name="badge_blue_bg">#E3F2FD</color>
+    <color name="badge_blue_text">#1E88E5</color>
+
+    <color name="badge_green_bg">#E8F5E9</color>
+    <color name="badge_green_text">#2E7D32</color>
+
+
+    <color name="bgColor">#009CDE</color>
+    <color name="bgColor_light">#AFE6FF</color>
+    <color name="btnColor">#E41D27</color>
+    <color name="red">#FF414D</color>
+    <color name="green">#36B37E</color>
+
+    <color name="cardbg">#ECECEC</color>
+    <color name="mtrl_textinput_default_box_stroke_color" tools:override="true">@color/lightash</color>
+
+    <color name="lightblue">#D3FFFF</color>
+    <color name="textColor">#091E42</color>
+    <color name="subheadingcolor">#97A0AF</color>
+    <color name="notsubmitted">#163764</color>
+    <color name="pending">#F6A20C</color>
+    <color name="submitted">#19B100</color>
+    <color name="rejected">#E53636</color>
+    <color name="hinttextColor">#A6A6A6</color>
+    <color name="light_white">#E5F7FF</color>
+    <color name="strokeColor">#0052CC</color>
+    <color name="transparent">@android:color/transparent</color>
+    <color name="dotlineColor">#969696</color>
+    <color name="lineColor">#9DB2CE</color>
+    <color name="strokecolor2">#D1D1D1</color>
+    <color name="liteskyblue">#DEEBFF</color>
+    <color name="skyblue">#6FA5FF</color>
+    <color name="blue">#386BF6</color>
+    <color name="grey">#6C7278</color>
+    <color name="lightblack">#4C4C4C</color>
+    <color name="ash">#6c6c6c</color>
+    <color name="ashcolor">#E0E0E0</color>
+    <color name="lightash">#E9EEF7</color>
+    <color name="whiteoff">#606060</color>
+    <color name="btncolor">#D9D9D9</color>
+    <color name="btncolor1">#A4A4A4</color>
+    <color name="blackash">#191919</color>
+    <color name="lightorange">#FFE8D3</color>
+    <color name="orange">#FC7900</color>
+    <color name="lightyellow">#FEFFD3</color>
+    <color name="lightgreen">#D4FFD3</color>
+    <color name="lightgray">#9D9EA0</color>
+    <color name="lightred">#FFC0C0</color>
+    <color name="strokeColor1">#CCCCCD</color>
+    <color name="lightpink">#F3D2FF</color>
+    <color name="pink">#BD00FF</color>
+    <color name="textcolor">#484848</color>
+    <color name="linecolor">#E7ECF3</color>
+    <color name="spinnercolor">#737373</color>
+    <color name="skybluelinecolor">#94B0FF</color>
+    <color name="linecolor1">#E9EEF7</color>
+    <color name="enabledColor">#D2D2D2</color>
+    <color name="light_white2">#F2F1F1</color>
+    <color name="light_blue">#0052CC</color>
+    <color name="light_white3">#D8D8D8</color>
+    <color name="red2">#E53636</color>
+    <color name="light_sky_blue">#EBF7FD</color>
+    <color name="light_orange">#FEF3EC</color>
+    <color name="light_orange1">#F97316</color>
+
+
+    <color name="light_gray2">#4E4E4E</color>
+    <color name="light_gray3">#9C9CA3</color>
+
+    <color name="trans">#99000000</color>
+
+    <color name="category_1">#4C4C4C</color> <!-- Replace with actual color code -->
+    <color name="category_2">#AF52DE</color> <!-- Replace with actual color code -->
+    <color name="category_3">#357AF6</color> <!-- Replace with actual color code -->
+    <color name="category_4">#5236F0</color> <!-- Replace with actual color code -->
+    <color name="category_5">#5856D6</color> <!-- Replace with actual color code -->
+    <color name="category_6">#5CC8BE</color> <!-- Replace with actual color code -->
+    <color name="category_7">#6AB81C</color> <!-- Replace with actual color code -->
+    <color name="category_8">#8CB3F9</color> <!-- Replace with actual color code -->
+    <color name="category_9">#99E05B</color> <!-- Replace with actual color code -->
+    <color name="category_10">#B94545</color> <!-- Replace with actual color code -->
+    <color name="category_11">#C7FF78</color> <!-- Replace with actual color code -->
+    <color name="category_12">#EA3354</color> <!-- Replace with actual color code -->
+    <color name="category_13">#F09436</color> <!-- Replace with actual color code -->
+    <color name="category_14">#F7CB45</color> <!-- Replace with actual color code -->
+    <color name="category_15">#808080</color>
+    <color name="_6b7280">#6b7280</color> <!-- Replace with actual color code -->
+
+    <color name="input_fill">#EBEBEB</color>
+    <color name="hintcolor">#97A0AF</color>      <!-- light gray filled background -->
+    <color name="hintcolor1">#E9F1FE</color>      <!-- light gray filled background -->
+    <color name="hintcolor2">#F0F0F0</color>      <!-- light gray filled background -->
+
+
+</resources>
+
