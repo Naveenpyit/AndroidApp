@@ -1,8 +1,14 @@
 package com.example.myapplication.network;
 
+
 import com.example.myapplication.model.AddCartRequest;
+import com.example.myapplication.model.AddWishlistRequest;
+import com.example.myapplication.model.AddWishlistResponse;
+import com.example.myapplication.model.CityListRequest;
+import com.example.myapplication.model.CityListResponse;
 import com.example.myapplication.model.CommonResponse;
 import com.example.myapplication.model.DeleteCartRequest;
+import com.example.myapplication.model.DeleteWishlistRequest;
 import com.example.myapplication.model.FiltersRequest;
 import com.example.myapplication.model.FiltersResponse;
 import com.example.myapplication.model.HomeProductsRequest;
@@ -13,18 +19,22 @@ import com.example.myapplication.model.ListCategoryRequest;
 import com.example.myapplication.model.ListCategoryResponse;
 import com.example.myapplication.model.ListItemsRequest;
 import com.example.myapplication.model.ListItemsResponse;
+import com.example.myapplication.model.ListWishlistRequest;
+import com.example.myapplication.model.ListWishlistResponse;
 import com.example.myapplication.model.ProductDetailRequest;
 import com.example.myapplication.model.ProductDetailResponse;
 import com.example.myapplication.model.RefreshTokenRequest;
 import com.example.myapplication.model.RefreshTokenResponse;
 import com.example.myapplication.model.SendOtpRequest;
 import com.example.myapplication.model.SendOtpResponse;
+import com.example.myapplication.model.StateListResponse;
 import com.example.myapplication.model.UpdateCartRequest;
 import com.example.myapplication.model.VerifyOtpRequest;
 import com.example.myapplication.model.VerifyOtpResponse;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.GET;
 import retrofit2.http.POST;
 
 public interface ApiService {
@@ -66,5 +76,20 @@ public interface ApiService {
 
     @POST("update-cart")
     Call<CommonResponse> updateCart(@Body UpdateCartRequest request);
+
+    @POST("add-wishlist")
+    Call<CommonResponse> addWishlist(@Body AddWishlistRequest request);
+
+    @POST("delete-wishlist")
+    Call<CommonResponse> deleteWishlist(@Body DeleteWishlistRequest request);
+
+    @POST("list-wishlist")
+    Call<ListWishlistResponse> listWishlist(@Body ListWishlistRequest request);
+
+    @GET("state-list")
+    Call<StateListResponse> getStateList();
+
+    @POST("city-list")
+    Call<CityListResponse> getCityList(@Body CityListRequest request);
 }
 

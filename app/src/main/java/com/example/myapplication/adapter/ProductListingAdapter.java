@@ -1,28 +1,24 @@
 package com.example.myapplication.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Paint;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.myapplication.R;
-import com.example.myapplication.model.AddCartRequest;
-import com.example.myapplication.model.CommonResponse;
-import com.example.myapplication.model.ProductModel;
+import com.example.myapplication.activity.ProductDetailScreen;
+import com.example.myapplication.model.*;
 import com.example.myapplication.network.ApiService;
 import com.example.myapplication.network.RetrofitClient;
+import com.example.myapplication.utils.TokenManager;
+import com.example.myapplication.utils.WishlistManager;
 
 import java.util.ArrayList;
 
@@ -34,195 +30,34 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     private static final int TYPE_PRODUCT = 0;
     private static final int TYPE_LOADING = 1;
-    private static final String TAG = "ProductAdapter";
 
+    public interface BadgeListener {
+        void onWishlistCountChanged(int delta);
+        void onCartCountChanged(int delta);
+    }
 
-    private static final String USER_ID = "10";
-
-    private final Context context;
-    private final ArrayList<ProductModel> list;
+    private Context context;
+    private ArrayList<ProductModel> list;
     private boolean isLoadingVisible = false;
-    private final ApiService apiService;
+
+    private ApiService apiService;
+    private WishlistManager wishlistManager;
+    private TokenManager tokenManager;
+    private BadgeListener badgeListener;
 
     public ProductListingAdapter(Context context, ArrayList<ProductModel> list) {
         this.context = context;
         this.list = list;
         this.apiService = RetrofitClient.getClient(context);
+        this.wishlistManager = WishlistManager.getInstance(context);
+        this.tokenManager = new TokenManager(context);
     }
 
-    @Override
-    public int getItemCount() {
-        return list.size() + (isLoadingVisible ? 1 : 0);
+    public void setBadgeListener(BadgeListener listener) {
+        this.badgeListener = listener;
     }
 
-    @Override
-    public int getItemViewType(int position) {
-        return (isLoadingVisible && position == getItemCount() - 1)
-                ? TYPE_LOADING : TYPE_PRODUCT;
-    }
-
-    @NonNull
-    @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        LayoutInflater inf = LayoutInflater.from(context);
-        if (viewType == TYPE_LOADING) {
-            return new LoadingViewHolder(inf.inflate(R.layout.item_loading_footer, parent, false));
-        }
-        return new ProductViewHolder(inf.inflate(R.layout.item_product_listing, parent, false));
-    }
-
-    @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        if (getItemViewType(position) == TYPE_LOADING) return;
-
-        ProductModel p = list.get(position);
-        ProductViewHolder h = (ProductViewHolder) holder;
-
-
-        h.tvName.setText(p.getName());
-        h.tvSubtitle.setText(p.getCategoryName());
-        h.tvPrice.setText("₹" + p.getSellingPrice());
-        h.tvMrp.setText("₹" + p.getMrp());
-        h.tvMrp.setPaintFlags(h.tvMrp.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
-        h.tvDiscount.setText(p.getDiscount() + "% Off");
-        h.tvMoq.setText("MRP : ₹" + p.getMrp() + " | MOQ : " + p.getMoq());
-        h.tvBuyPrice.setText("Buy for ₹" + p.getSellingPrice());
-        h.tvMargin.setText(p.getDiscount() + "% Margin");
-
-        Glide.with(context)
-                .load(p.getImageUrl())
-                .placeholder(R.drawable.ic_launcher_background)
-                .into(h.ivImage);
-
-        int qty = safeInt(p.getCartQty());
-        if (qty > 0) {
-            h.btnAddToCart.setVisibility(View.GONE);
-            h.layoutQty.setVisibility(View.VISIBLE);
-            h.tvQtyCount.setText(String.valueOf(qty));
-        } else {
-            h.btnAddToCart.setVisibility(View.VISIBLE);
-            h.layoutQty.setVisibility(View.GONE);
-            h.tvQtyCount.setText("1");
-        }
-
-        h.btnAddToCart.setOnClickListener(v -> {
-            int pos = h.getAdapterPosition();
-            if (pos == RecyclerView.NO_POSITION) return;
-
-            ProductModel item = list.get(pos);
-
-
-            item.setCartQty("1");
-            h.btnAddToCart.setVisibility(View.GONE);
-            h.layoutQty.setVisibility(View.VISIBLE);
-            h.tvQtyCount.setText("1");
-
-            callAddCartApi(item, 1);
-        });
-
-
-        h.btnPlus.setOnClickListener(v -> {
-            int pos = h.getAdapterPosition();
-            if (pos == RecyclerView.NO_POSITION) return;
-
-            ProductModel item = list.get(pos);
-            int currentQty = safeInt(h.tvQtyCount.getText().toString());
-            int newQty = currentQty + 1;
-
-            item.setCartQty(String.valueOf(newQty));
-            h.tvQtyCount.setText(String.valueOf(newQty));
-
-            callAddCartApi(item, newQty);
-        });
-
-
-        h.btnMinus.setOnClickListener(v -> {
-            int pos = h.getAdapterPosition();
-            if (pos == RecyclerView.NO_POSITION) return;
-
-            ProductModel item = list.get(pos);
-            int currentQty = safeInt(h.tvQtyCount.getText().toString());
-
-            if (currentQty > 1) {
-                int newQty = currentQty - 1;
-
-                // Optimistic UI update
-                item.setCartQty(String.valueOf(newQty));
-                h.tvQtyCount.setText(String.valueOf(newQty));
-
-                callAddCartApi(item, newQty);
-
-            } else {
-                // qty == 1 → remove from cart (send qty = 0)
-                item.setCartQty("0");
-                h.layoutQty.setVisibility(View.GONE);
-                h.btnAddToCart.setVisibility(View.VISIBLE);
-
-                callAddCartApi(item, 0);
-            }
-        });
-    }
-
-    /**
-     * Calls POST add-cart with the correct field order:
-     *   {"n_category":"1","n_pack":"2","n_product":"1","n_qty":"1","n_user":"10"}
-     */
-    private void callAddCartApi(ProductModel item, int quantity) {
-
-        // ── Build request — field order MUST match AddCartRequest constructor ──
-        AddCartRequest request = new AddCartRequest(
-                item.getCategory(),        // n_category
-                item.getPackId(),          // n_pack
-                item.getItemId(),          // n_product
-                String.valueOf(quantity),  // n_qty
-                USER_ID                    // n_user
-        );
-
-        Log.d(TAG, "ADD-CART → category=" + item.getCategory()
-                + " pack=" + item.getPackId()
-                + " product=" + item.getItemId()
-                + " qty=" + quantity
-                + " user=" + USER_ID);
-
-        apiService.addCart(request).enqueue(new Callback<CommonResponse>() {
-            @Override
-            public void onResponse(Call<CommonResponse> call, Response<CommonResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    CommonResponse body = response.body();
-                    Log.d(TAG, "add-cart response status=" + body.getStatus()
-                            + " msg=" + body.getMessage());
-
-                    if (body.getStatus() == 1) {
-                        if (quantity > 0) {
-                            Toast.makeText(context,
-                                    quantity + " added to cart ✓", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(context,
-                                    "Removed from cart ✓", Toast.LENGTH_SHORT).show();
-                        }
-                    } else {
-                        Toast.makeText(context,
-                                "Error: " + body.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Log.e(TAG, "add-cart failed, code=" + response.code());
-                    Toast.makeText(context,
-                            "Failed (code " + response.code() + ")", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<CommonResponse> call, Throwable t) {
-                Log.e(TAG, "add-cart network error: " + t.getMessage());
-                Toast.makeText(context,
-                        "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private int safeInt(String v) {
-        try { return Integer.parseInt(v); } catch (Exception e) { return 0; }
-    }
+    // ───────────── Loading ─────────────
 
     public void showLoading() {
         if (!isLoadingVisible) {
@@ -238,37 +73,151 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         }
     }
 
+    @Override
+    public int getItemCount() {
+        return list.size() + (isLoadingVisible ? 1 : 0);
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return (isLoadingVisible && position == getItemCount() - 1)
+                ? TYPE_LOADING : TYPE_PRODUCT;
+    }
+
+    // ───────────── ViewHolder ─────────────
+
+    @NonNull
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+
+        if (viewType == TYPE_LOADING) {
+            return new LoadingViewHolder(LayoutInflater.from(context)
+                    .inflate(R.layout.item_loading_footer, parent, false));
+        }
+
+        return new ProductViewHolder(LayoutInflater.from(context)
+                .inflate(R.layout.item_product_listing, parent, false));
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+
+        if (getItemViewType(position) == TYPE_LOADING) return;
+
+        ProductViewHolder h = (ProductViewHolder) holder;
+        ProductModel p = list.get(position);
+
+        h.tvName.setText(p.getName());
+        h.tvSubtitle.setText(p.getCategoryName());
+        h.tvPrice.setText("₹" + p.getSellingPrice());
+
+        Glide.with(context)
+                .load(p.getImageUrl())
+                .placeholder(R.drawable.ic_launcher_background)
+                .into(h.ivImage);
+
+        // ───── Wishlist ─────
+        boolean isWishlisted = wishlistManager.isWishlisted(p.getItemId());
+        updateWishlistIcon(h, isWishlisted);
+
+        h.ivWishlist.setOnClickListener(v -> {
+
+            String userId = tokenManager.getUserId();
+            if (userId == null) {
+                Toast.makeText(context, "Login required", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (!isWishlisted) {
+
+                AddWishlistRequest req = new AddWishlistRequest(
+                        p.getCategory(), p.getItemId(), p.getPackId(), userId
+                );
+
+                apiService.addWishlist(req).enqueue(new Callback<CommonResponse>() {
+                    @Override
+                    public void onResponse(Call<CommonResponse> call, Response<CommonResponse> res) {
+
+                        if (res.isSuccessful() && res.body() != null && res.body().getStatus() == 1) {
+
+                            wishlistManager.addWishlist(p.getItemId(), p.getItemId(), p.getPackId());
+
+                            if (badgeListener != null)
+                                badgeListener.onWishlistCountChanged(+1);
+
+                            updateWishlistIcon(h, true);
+
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<CommonResponse> call, Throwable t) {}
+                });
+
+            } else {
+
+                String wishlistId = wishlistManager.getWishlistId(p.getItemId());
+
+                if (wishlistId == null) return;
+
+                DeleteWishlistRequest req = new DeleteWishlistRequest(userId, wishlistId);
+
+                apiService.deleteWishlist(req).enqueue(new Callback<CommonResponse>() {
+                    @Override
+                    public void onResponse(Call<CommonResponse> call, Response<CommonResponse> res) {
+
+                        if (res.isSuccessful() && res.body() != null && res.body().getStatus() == 1) {
+
+                            wishlistManager.removeWishlist(p.getItemId());
+
+                            if (badgeListener != null)
+                                badgeListener.onWishlistCountChanged(-1);
+
+                            updateWishlistIcon(h, false);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<CommonResponse> call, Throwable t) {}
+                });
+            }
+        });
+
+        // Click → Detail
+        h.itemView.setOnClickListener(v -> {
+            Intent i = new Intent(context, ProductDetailScreen.class);
+            i.putExtra("c_random", p.getRandom());
+            context.startActivity(i);
+        });
+    }
+
+    private void updateWishlistIcon(ProductViewHolder h, boolean state) {
+        h.ivWishlist.setImageResource(
+                state ? R.drawable.ic_favorite_filled : R.drawable.ic_favorite_border
+        );
+    }
+
+    // ───────────── ViewHolders ─────────────
 
     static class ProductViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivImage;
-        TextView tvName, tvSubtitle, tvPrice, tvMrp, tvDiscount;
-        TextView tvMoq, tvBuyPrice, tvMargin, tvQtyCount;
-        Button btnAddToCart;
-        LinearLayout layoutQty;
-        TextView btnMinus, btnPlus;
 
-        ProductViewHolder(@NonNull View v) {
+        ImageView ivImage, ivWishlist;
+        TextView tvName, tvSubtitle, tvPrice;
+
+        public ProductViewHolder(@NonNull View v) {
             super(v);
-            ivImage       = v.findViewById(R.id.iv_product_image);
-            tvName        = v.findViewById(R.id.tv_product_name);
-            tvSubtitle    = v.findViewById(R.id.tv_product_subtitle);
-            tvPrice       = v.findViewById(R.id.tv_selling_price);
-            tvMrp         = v.findViewById(R.id.tv_mrp);
-            tvDiscount    = v.findViewById(R.id.tv_discount);
-            tvMoq         = v.findViewById(R.id.tv_moq);
-            tvBuyPrice    = v.findViewById(R.id.tv_buy_price);
-            tvMargin      = v.findViewById(R.id.tv_margin);
-            btnAddToCart  = v.findViewById(R.id.btn_add_to_cart);
-            layoutQty     = v.findViewById(R.id.layout_qty);
-            btnMinus      = v.findViewById(R.id.btn_minus);
-            btnPlus       = v.findViewById(R.id.btn_plus);
-            tvQtyCount    = v.findViewById(R.id.tv_qty_count);
+            ivImage = v.findViewById(R.id.iv_product_image);
+            ivWishlist = v.findViewById(R.id.iv_wishlist);
+            tvName = v.findViewById(R.id.tv_product_name);
+            tvSubtitle = v.findViewById(R.id.tv_product_subtitle);
+            tvPrice = v.findViewById(R.id.tv_selling_price);
         }
     }
 
     static class LoadingViewHolder extends RecyclerView.ViewHolder {
         ProgressBar progressBar;
-        LoadingViewHolder(@NonNull View v) {
+
+        public LoadingViewHolder(@NonNull View v) {
             super(v);
             progressBar = v.findViewById(R.id.progress_bar);
         }

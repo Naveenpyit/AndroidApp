@@ -35,10 +35,8 @@ public class SplashScreen extends AppCompatActivity {
             boolean isFirstTime = prefs.getBoolean("is_first_time", true);
 
             if (isFirstTime) {
-                // First time user → show onboarding
                 startActivity(new Intent(this, OnboadingScreen.class));
             } else {
-                // Returning user → go to main activity
                 startActivity(new Intent(this, MainActivity.class));
             }
 

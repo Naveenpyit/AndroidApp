@@ -3,106 +3,266 @@ package com.example.myapplication.adapter;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Paint;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-
-import com.example.myapplication.ProductDetailScreen;
 import com.example.myapplication.R;
+import com.example.myapplication.activity.ProductDetailScreen;
+import com.example.myapplication.model.AddWishlistRequest;
+import com.example.myapplication.model.CommonResponse;
+import com.example.myapplication.model.DeleteWishlistRequest;
 import com.example.myapplication.model.ProductModel;
+import com.example.myapplication.network.ApiService;
+import com.example.myapplication.network.RetrofitClient;
+import com.example.myapplication.utils.TokenManager;
+import com.example.myapplication.utils.WishlistManager;
 
 import java.util.ArrayList;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHolder> {
 
     private final Context context;
-    private final ArrayList<ProductModel> productList;
+    private final ArrayList<ProductModel> list;
+    private final WishlistManager wishlistManager;
+    private final ApiService apiService;
+    private final TokenManager tokenManager;
 
-    public ProductAdapter(Context context, ArrayList<ProductModel> productList) {
+    public ProductAdapter(Context context, ArrayList<ProductModel> list) {
         this.context = context;
-        this.productList = productList;
+        this.list = list;
+        this.wishlistManager = WishlistManager.getInstance(context);
+        this.apiService = RetrofitClient.getClient(context);
+        this.tokenManager = new TokenManager(context);
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context)
-                .inflate(R.layout.item_product_card, parent, false);
-        return new ViewHolder(view);
+        return new ViewHolder(LayoutInflater.from(context)
+                .inflate(R.layout.item_product_card, parent, false));
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        ProductModel product = productList.get(position);
+    public void onBindViewHolder(@NonNull ViewHolder h, int position) {
 
-        holder.tvProductName.setText(product.getName() != null ? product.getName() : "");
-        holder.tvSubtitle.setText(product.getCategoryName() != null ? product.getCategoryName() : "");
-        holder.tvSellingPrice.setText("₹" + (product.getSellingPrice() != null ? product.getSellingPrice() : "0"));
-        holder.tvDiscount.setText((product.getDiscount() != null ? product.getDiscount() : "0") + "% Off");
-        holder.tvMoq.setText("MRP : ₹" + product.getMrp() + " | MOQ : " + product.getMoq());
-        holder.btnBuy.setText("Buy for ₹" + (product.getSellingPrice() != null ? product.getSellingPrice() : "0"));
-        holder.tvMargin.setText((product.getDiscount() != null ? product.getDiscount() : "0") + "% Margin");
+        ProductModel p = list.get(position);
 
-        // ✅ Strikethrough set in Java — NOT in XML
-        holder.tvMrp.setText("₹" + (product.getMrp() != null ? product.getMrp() : "0"));
-        holder.tvMrp.setPaintFlags(holder.tvMrp.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+        // ─── TEXT ───
+        h.tvName.setText(p.getName());
+        h.tvSubtitle.setText(p.getCategoryName());
 
-        // Load image
+        h.tvPrice.setText("₹" + p.getSellingPrice());
+        h.tvMrp.setText("₹" + p.getMrp());
+        h.tvMrp.setPaintFlags(h.tvMrp.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+
+        h.tvDiscount.setText(p.getDiscount() + "% Off");
+        h.tvMoq.setText("MOQ: " + p.getMoq());
+        h.btnBuy.setText("Buy ₹" + p.getSellingPrice());
+
+        // ─── IMAGE ───
         Glide.with(context)
-                .load(product.getImageUrl())
+                .load(p.getImageUrl())
                 .placeholder(R.drawable.logo)
-                .error(R.drawable.logo)
-                .centerCrop()
-                .into(holder.ivProductImage);
+                .error(R.drawable.arrivalimgg)
+                .into(h.ivImage);
 
-        // Wishlist icon state
-        holder.ivWishlist.setImageResource(
-                product.isWishlisted() ? R.drawable.ic_favorite_filled : R.drawable.ic_favorite_border
+        // ─── WISHLIST STATE ───
+        boolean isWishlisted = wishlistManager.isWishlisted(p.getItemId());
+        updateWishlistIcon(h, isWishlisted);
+
+        // ─── CLICK WISHLIST ───
+        h.ivWishlist.setOnClickListener(v -> {
+
+            boolean currentState = wishlistManager.isWishlisted(p.getItemId());
+
+            if (!currentState) {
+                addWishlist(p, h);
+            } else {
+                removeWishlist(p, h);
+            }
+        });
+
+        // ─── CLICK ITEM → DETAIL ───
+        h.itemView.setOnClickListener(v -> {
+            Intent i = new Intent(context, ProductDetailScreen.class);
+            i.putExtra("c_random", p.getRandom());
+            context.startActivity(i);
+        });
+    }
+
+    // ─────────────────────────────────────────────
+    // ADD WISHLIST
+    // ─────────────────────────────────────────────
+
+    private void addWishlist(ProductModel p, ViewHolder h) {
+
+        String userId = tokenManager.getUserId();
+
+        if (userId == null || userId.isEmpty()) {
+            Toast.makeText(context, "Login required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        h.ivWishlist.setEnabled(false);
+
+        AddWishlistRequest request = new AddWishlistRequest(
+                p.getCategory(),
+                p.getItemId(),
+                p.getPackId(),
+                userId
         );
 
-        // Wishlist toggle
-        holder.ivWishlist.setOnClickListener(v -> {
-            product.setWishlisted(!product.isWishlisted());
-            holder.ivWishlist.setImageResource(
-                    product.isWishlisted() ? R.drawable.ic_favorite_filled : R.drawable.ic_favorite_border
-            );
-        });
+        Log.e("API_CALL", "Add Wishlist Called");
 
-        holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, ProductDetailScreen.class);
-            intent.putExtra("c_random", product.getRandom());
-            context.startActivity(intent);
+        apiService.addWishlist(request).enqueue(new Callback<CommonResponse>() {
+            @Override
+            public void onResponse(Call<CommonResponse> call, Response<CommonResponse> response) {
+
+                h.ivWishlist.setEnabled(true);
+
+                if (response.isSuccessful() && response.body() != null
+                        && response.body().getStatus() == 1) {
+
+                    String wishlistId = null;
+
+                    try {
+                        wishlistId = response.body().getWishlistId();
+                    } catch (Exception e) {
+                        wishlistId = p.getItemId();
+                    }
+
+                    if (wishlistId == null || wishlistId.isEmpty()) {
+                        wishlistId = p.getItemId();
+                    }
+
+                    wishlistManager.addWishlist(p.getItemId(), wishlistId, p.getPackId());
+
+                    updateWishlistIcon(h, true);
+
+                    int pos = h.getAdapterPosition();
+                    if (pos != RecyclerView.NO_POSITION) {
+                        notifyItemChanged(pos);
+                    }
+
+                    Toast.makeText(context, "Added to Wishlist ❤️", Toast.LENGTH_SHORT).show();
+
+                } else {
+                    Toast.makeText(context, "Failed to add wishlist", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<CommonResponse> call, Throwable t) {
+                h.ivWishlist.setEnabled(true);
+                Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    // ─────────────────────────────────────────────
+    // REMOVE WISHLIST
+    // ─────────────────────────────────────────────
+
+    private void removeWishlist(ProductModel p, ViewHolder h) {
+
+        String userId = tokenManager.getUserId();
+
+        if (userId == null || userId.isEmpty()) {
+            Toast.makeText(context, "Login required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String wishlistId = wishlistManager.getWishlistId(p.getItemId());
+
+        if (wishlistId == null) {
+            wishlistManager.removeWishlist(p.getItemId());
+            updateWishlistIcon(h, false);
+            notifyItemChanged(h.getAdapterPosition());
+            return;
+        }
+
+        h.ivWishlist.setEnabled(false);
+
+        DeleteWishlistRequest request = new DeleteWishlistRequest(userId, wishlistId);
+
+        apiService.deleteWishlist(request).enqueue(new Callback<CommonResponse>() {
+            @Override
+            public void onResponse(Call<CommonResponse> call, Response<CommonResponse> response) {
+
+                h.ivWishlist.setEnabled(true);
+
+                if (response.isSuccessful() && response.body() != null
+                        && response.body().getStatus() == 1) {
+
+                    wishlistManager.removeWishlist(p.getItemId());
+
+                    updateWishlistIcon(h, false);
+                    notifyItemChanged(h.getAdapterPosition());
+
+                    Toast.makeText(context, "Removed from Wishlist", Toast.LENGTH_SHORT).show();
+
+                } else {
+                    Toast.makeText(context, "Failed to remove", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<CommonResponse> call, Throwable t) {
+                h.ivWishlist.setEnabled(true);
+                Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
-    @Override
-    public int getItemCount() { return productList.size(); }
+    // ─────────────────────────────────────────────
+    // ICON UPDATE
+    // ─────────────────────────────────────────────
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivProductImage, ivWishlist;
-        TextView tvProductName, tvSubtitle, tvSellingPrice, tvMrp, tvDiscount, tvMoq, tvMargin;
+    private void updateWishlistIcon(ViewHolder h, boolean state) {
+        h.ivWishlist.setImageResource(
+                state ? R.drawable.ic_favorite_filled : R.drawable.ic_favorite_border
+        );
+    }
+
+    @Override
+    public int getItemCount() {
+        return list.size();
+    }
+
+    // ─────────────────────────────────────────────
+    // VIEW HOLDER
+    // ─────────────────────────────────────────────
+
+    static class ViewHolder extends RecyclerView.ViewHolder {
+
+        ImageView ivImage, ivWishlist;
+        TextView tvName, tvSubtitle, tvPrice, tvMrp, tvDiscount, tvMoq;
         Button btnBuy;
 
-        public ViewHolder(@NonNull View itemView) {
-            super(itemView);
-            ivProductImage = itemView.findViewById(R.id.iv_product_image);
-            ivWishlist     = itemView.findViewById(R.id.iv_wishlist);
-            tvProductName  = itemView.findViewById(R.id.tv_product_name);
-            tvSubtitle     = itemView.findViewById(R.id.tv_product_subtitle);
-            tvSellingPrice = itemView.findViewById(R.id.tv_selling_price);
-            tvMrp          = itemView.findViewById(R.id.tv_mrp);
-            tvDiscount     = itemView.findViewById(R.id.tv_discount);
-            tvMoq          = itemView.findViewById(R.id.tv_moq);
-            btnBuy         = itemView.findViewById(R.id.btn_buy);
-            tvMargin       = itemView.findViewById(R.id.tv_margin);
+        public ViewHolder(@NonNull View v) {
+            super(v);
+
+            ivImage = v.findViewById(R.id.iv_product_image);
+            ivWishlist = v.findViewById(R.id.iv_wishlist);
+
+            tvName = v.findViewById(R.id.tv_product_name);
+            tvSubtitle = v.findViewById(R.id.tv_product_subtitle);
+            tvPrice = v.findViewById(R.id.tv_selling_price);
+            tvMrp = v.findViewById(R.id.tv_mrp);
+            tvDiscount = v.findViewById(R.id.tv_discount);
+            tvMoq = v.findViewById(R.id.tv_moq);
+
+            btnBuy = v.findViewById(R.id.btn_buy);
         }
     }
 }

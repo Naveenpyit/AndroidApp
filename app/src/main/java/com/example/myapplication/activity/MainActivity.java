@@ -17,7 +17,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.myapplication.CartScreen;
 import com.example.myapplication.R;
 import com.example.myapplication.adapter.BannerAdapter;
 import com.example.myapplication.adapter.CategoryAdapter;
@@ -255,7 +254,7 @@ public class MainActivity extends AppCompatActivity {
             if (id == R.id.nav_home)    return true;
             if (id == R.id.nav_orders)  { startActivity(new Intent(this, ProductListingScreen.class));  return true; }
             if (id == R.id.nav_cart)    { startActivity(new Intent(this, CartScreen.class));     return true; }
-            if (id == R.id.nav_account) { startActivity(new Intent(this, AccountActivity.class));  return true; }
+            if (id == R.id.nav_account) { startActivity(new Intent(this, AccountScreen.class));  return true; }
             return false;
         });
     }

@@ -1,10 +1,364 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activity.AccountActivity">
+    android:orientation="vertical"
+    android:background="#F5F5F5">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- ── Red Header ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/red_primary"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="20dp">
+
+        <!-- Avatar -->
+        <FrameLayout
+            android:layout_width="52dp"
+            android:layout_height="52dp">
+
+            <ImageView
+                android:id="@+id/iv_avatar"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:src="@drawable/ic_launcher_background"
+                android:background="@drawable/circle_white_bg"
+                android:scaleType="centerCrop"
+                android:padding="2dp" />
+        </FrameLayout>
+
+        <!-- Name + Phone -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
+
+            <TextView
+                android:id="@+id/tv_user_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Indirodasan"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_user_phone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="9874563221"
+                android:textColor="#FFCCCC"
+                android:textSize="13sp"
+                android:layout_marginTop="2dp" />
+        </LinearLayout>
+
+        <!-- Edit icon -->
+        <ImageView
+            android:id="@+id/btn_edit_profile"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/edit_text_background"
+            android:tint="@color/white"
+            android:padding="6dp"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+    </LinearLayout>
+
+    <!-- ── Scrollable Content ── -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="16dp">
+
+            <!-- ── Section: Account ── -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Account"
+                android:textColor="#888888"
+                android:textSize="12sp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="14dp"
+                android:paddingBottom="6dp"
+                android:textAllCaps="true"
+                android:letterSpacing="0.08" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/white"
+                android:elevation="1dp">
+
+                <!-- Setup your account -->
+                <include layout="@layout/item_account_menu_row"
+                    android:id="@+id/row_setup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#EEEEEE" android:layout_marginStart="54dp"/>
+
+                <!-- Orders -->
+                <include layout="@layout/item_account_menu_row"
+                    android:id="@+id/row_orders"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#EEEEEE" android:layout_marginStart="54dp"/>
+
+                <!-- Buy Again -->
+                <include layout="@layout/item_account_menu_row"
+                    android:id="@+id/row_buy_again"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#EEEEEE" android:layout_marginStart="54dp"/>
+
+                <!-- Favourites / Wishlist -->
+                <include layout="@layout/item_account_menu_row"
+                    android:id="@+id/row_favourites"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#EEEEEE" android:layout_marginStart="54dp"/>
+
+                <!-- Return -->
+                <include layout="@layout/item_account_menu_row"
+                    android:id="@+id/row_return"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#EEEEEE" android:layout_marginStart="54dp"/>
+
+                <!-- Notifications -->
+                <include layout="@layout/item_account_menu_row"
+                    android:id="@+id/row_notifications"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#EEEEEE" android:layout_marginStart="54dp"/>
+
+                <!-- Wallet -->
+                <include layout="@layout/item_account_menu_row"
+                    android:id="@+id/row_wallet"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#EEEEEE" android:layout_marginStart="54dp"/>
+
+                <!-- Coupons -->
+                <include layout="@layout/item_account_menu_row"
+                    android:id="@+id/row_coupons"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- ── Section: Settings ── -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Settings"
+                android:textColor="#888888"
+                android:textSize="12sp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="14dp"
+                android:paddingBottom="6dp"
+                android:textAllCaps="true"
+                android:letterSpacing="0.08" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/white"
+                android:elevation="1dp">
+
+                <!-- Verification Details -->
+                <include layout="@layout/item_account_menu_row"
+                    android:id="@+id/row_verification"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#EEEEEE" android:layout_marginStart="54dp"/>
+
+                <!-- Address -->
+                <include layout="@layout/item_account_menu_row"
+                    android:id="@+id/row_address"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#EEEEEE" android:layout_marginStart="54dp"/>
+
+                <!-- Language -->
+                <include layout="@layout/item_account_menu_row"
+                    android:id="@+id/row_language"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#EEEEEE" android:layout_marginStart="54dp"/>
+
+                <!-- Settings -->
+                <include layout="@layout/item_account_menu_row"
+                    android:id="@+id/row_settings"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- ── Section: More ── -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="More"
+                android:textColor="#888888"
+                android:textSize="12sp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="14dp"
+                android:paddingBottom="6dp"
+                android:textAllCaps="true"
+                android:letterSpacing="0.08" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/white"
+                android:elevation="1dp">
+
+                <!-- Share App with Your Friends -->
+                <include layout="@layout/item_account_menu_row"
+                    android:id="@+id/row_share_app"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#EEEEEE" android:layout_marginStart="54dp"/>
+
+                <!-- Raise a complaint -->
+                <include layout="@layout/item_account_menu_row"
+                    android:id="@+id/row_complaint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#EEEEEE" android:layout_marginStart="54dp"/>
+
+                <!-- About Us -->
+                <include layout="@layout/item_account_menu_row"
+                    android:id="@+id/row_about"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp"
+                    android:background="#EEEEEE" android:layout_marginStart="54dp"/>
+
+                <!-- Terms & Conditions -->
+                <include layout="@layout/item_account_menu_row"
+                    android:id="@+id/row_terms"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- ── App Version ── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/white"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="14dp"
+                android:paddingBottom="14dp"
+                android:layout_marginTop="8dp"
+                android:elevation="1dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="App Version"
+                    android:textColor="#333333"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tv_app_version"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1.23/831"
+                    android:textColor="#888888"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="  App is up to date"
+                    android:textColor="#2E7D32"
+                    android:textSize="12sp"
+                    android:layout_marginStart="8dp" />
+            </LinearLayout>
+
+            <!-- ── Logout ── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/white"
+                android:gravity="center"
+                android:layout_marginTop="8dp"
+                android:elevation="1dp">
+
+                <TextView
+                    android:id="@+id/btn_logout"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:gravity="center"
+                    android:text="Logout"
+                    android:textColor="@color/red_primary"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:background="?attr/selectableItemBackground" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- ── Bottom Navigation ── -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        app:itemIconTint="@drawable/bottom_nav_color_selector"
+        app:itemTextColor="@drawable/bottom_nav_color_selector"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/bottom_nav_menu"
+        app:elevation="8dp" />
+
+</LinearLayout>

@@ -22,7 +22,7 @@ public class RetrofitClient {
         TokenManager tokenManager = new TokenManager(context);
 
         Retrofit tempRetrofit = new Retrofit.Builder()
-                .baseUrl(" https://www.tomhiddleb2b.com/api/")
+                .baseUrl("https://www.tomhiddleb2b.com/api/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
@@ -42,7 +42,7 @@ public class RetrofitClient {
                 .build();
 
         retrofit = new Retrofit.Builder()
-                .baseUrl(" https://www.tomhiddleb2b.com/api/")
+                .baseUrl("https://www.tomhiddleb2b.com/api/")
                 .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();

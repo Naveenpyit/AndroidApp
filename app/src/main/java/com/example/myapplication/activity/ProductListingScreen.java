@@ -7,10 +7,16 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -22,7 +28,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.myapplication.CartScreen;
 import com.example.myapplication.R;
 import com.example.myapplication.adapter.FilterOptionAdapter;
 import com.example.myapplication.adapter.ProductListingAdapter;
@@ -34,6 +39,7 @@ import com.example.myapplication.model.ListItemsResponse;
 import com.example.myapplication.model.ProductModel;
 import com.example.myapplication.network.ApiService;
 import com.example.myapplication.network.RetrofitClient;
+import com.example.myapplication.utils.WishlistManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
 
@@ -47,10 +53,18 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class ProductListingScreen extends AppCompatActivity {
+public class ProductListingScreen extends AppCompatActivity
+        implements ProductListingAdapter.BadgeListener {   // ← implement interface
 
-    private ImageView btnBack;
+    private ImageView btnBack, btnSearch;
     private TextView tvTitle, tvProductCount;
+    private TextView tvWishlistCount, tvCartCount;          // ← badge TextViews
+
+    // ── Search bar (hidden by default) ──────────────────────────────────────
+    private LinearLayout searchBar;
+    private EditText      etSearch;
+    private ImageView     btnClearSearch;
+    private String        currentSearchQuery = "";
 
     private RecyclerView rvProducts;
     private ProductListingAdapter productAdapter;
@@ -63,28 +77,32 @@ public class ProductListingScreen extends AppCompatActivity {
     private ApiService apiService;
     private ProgressDialog progressDialog;
 
-    private int currentPage = 1;
+    private int currentPage  = 1;
     private int totalRecords = 0;
-    private boolean isLoading = false;
+    private boolean isLoading    = false;
     private boolean hasMorePages = true;
     private static final int PAGE_LIMIT = 20;
 
-    // categoryId is null when opened directly (show all), non-null when opened from a category
-    private String categoryId = null;
-    private String sectionId = "";
+    private String categoryId  = null;
+    private String sectionId   = "";
     private String screenTitle = "Product Listing";
 
     private FiltersResponse.FilterData filterData = null;
 
-    // selectedFilters only holds USER-chosen filter values (never auto-injected categoryId)
     private final HashMap<String, List<String>> selectedFilters = new HashMap<>();
+
+    // ── Badge counters ───────────────────────────────────────────────────────
+    private int wishlistCount = 0;
+    private int cartCount     = 0;
+
+    private FrameLayout wishlist,addtocountcard;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_product_listing_screen);
 
-        categoryId  = getIntent().getStringExtra("categoryId");   // null = open directly
+        categoryId  = getIntent().getStringExtra("categoryId");
         sectionId   = getIntent().getStringExtra("sectionId");
         screenTitle = getIntent().getStringExtra("title");
 
@@ -96,19 +114,33 @@ public class ProductListingScreen extends AppCompatActivity {
         setupRecycler();
         setupChips();
         setupBottomNav();
+        setupSearchBar();
+        if (getIntent().getBooleanExtra("openSearch", false)) {
+            searchBar.setVisibility(View.VISIBLE);
+            etSearch.requestFocus();
+            // slight delay so the window is ready before showing keyboard
+            etSearch.postDelayed(this::showKeyboard, 200);
+        }
+        // Restore persistent wishlist count into badge
+        wishlistCount = WishlistManager.getInstance(this).getWishlistCount();
+        updateWishlistBadge();
 
-        // Fetch filters using categoryId (or empty-string for "all" when opened directly)
         fetchFilters();
         fetchProducts(true);
     }
 
-    // ─── Init ──────────────────────────────────────────────────────────────────
+    // ─── Init ────────────────────────────────────────────────────────────────
 
     private void initViews() {
-        btnBack        = findViewById(R.id.btn_back);
-        tvTitle        = findViewById(R.id.tv_title);
-        tvProductCount = findViewById(R.id.tv_product_count);
-        rvProducts     = findViewById(R.id.rv_products);
+        btnBack   = findViewById(R.id.btn_back);
+        btnSearch = findViewById(R.id.btn_search);
+        tvTitle   = findViewById(R.id.tv_title);
+        tvProductCount  = findViewById(R.id.tv_product_count);
+        tvWishlistCount = findViewById(R.id.tv_wishlist_count);  // ← badge
+        tvCartCount     = findViewById(R.id.tv_cart_count);      // ← badge
+
+        rvProducts = findViewById(R.id.rv_products);
+        addtocountcard = findViewById(R.id.addtocountcard);
 
         chipCategory = findViewById(R.id.chip_sort);
         chipPrice    = findViewById(R.id.chip_price);
@@ -122,19 +154,126 @@ public class ProductListingScreen extends AppCompatActivity {
         tvChipFit      = findViewById(R.id.tv_fabric_text);
         tvChipTag      = findViewById(R.id.tv_style_text);
 
+        wishlist  = findViewById(R.id.wishlist);
         apiService = RetrofitClient.getClient(this);
         tvTitle.setText(screenTitle);
+
+        // ── Search bar views (add these ids to your layout — see below) ──────
+        searchBar      = findViewById(R.id.search_bar);
+        etSearch       = findViewById(R.id.et_search);
+        btnClearSearch = findViewById(R.id.btn_clear_search);
 
         btnBack.setOnClickListener(v -> {
             startActivity(new Intent(this, MainActivity.class));
             finish();
         });
+
+        wishlist.setOnClickListener(v ->
+                startActivity(new Intent(ProductListingScreen.this, WishlistScreen.class)));
+        addtocountcard.setOnClickListener(v ->
+                startActivity(new Intent(ProductListingScreen.this, CartScreen.class)));
+
     }
+
+    // ─── Search bar ──────────────────────────────────────────────────────────
+
+    /**
+     * Toggles a search bar that slides in below the toolbar.
+     * Typing filters products via the existing fetchProducts() API (search param).
+     */
+    private void setupSearchBar() {
+        // Search icon click → show / hide bar
+        btnSearch.setOnClickListener(v -> toggleSearchBar());
+
+        // Clear 'X' button
+        btnClearSearch.setOnClickListener(v -> {
+            etSearch.setText("");
+            currentSearchQuery = "";
+            reloadProducts();
+        });
+
+        // Live-search on text change (debounce optional — kept simple here)
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                currentSearchQuery = s.toString().trim();
+                btnClearSearch.setVisibility(currentSearchQuery.isEmpty() ? View.GONE : View.VISIBLE);
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
+
+        // Trigger search on keyboard "Search" / "Done" action
+        etSearch.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH
+                    || actionId == EditorInfo.IME_ACTION_DONE) {
+                hideKeyboard();
+                reloadProducts();
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private void toggleSearchBar() {
+        if (searchBar.getVisibility() == View.VISIBLE) {
+            searchBar.setVisibility(View.GONE);
+            if (!currentSearchQuery.isEmpty()) {
+                currentSearchQuery = "";
+                reloadProducts();
+            }
+            hideKeyboard();
+        } else {
+            searchBar.setVisibility(View.VISIBLE);
+            etSearch.requestFocus();
+            showKeyboard();
+        }
+    }
+
+    private void showKeyboard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (imm != null) imm.showSoftInput(etSearch, InputMethodManager.SHOW_IMPLICIT);
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (imm != null) imm.hideSoftInputFromWindow(etSearch.getWindowToken(), 0);
+    }
+
+    // ─── Badge helpers ───────────────────────────────────────────────────────
+
+    /** Called by adapter when wishlist add/remove succeeds. */
+    @Override
+    public void onWishlistCountChanged(int delta) {
+        wishlistCount = Math.max(0, wishlistCount + delta);
+        updateWishlistBadge();
+    }
+
+    /** Called by adapter when cart qty changes. */
+    @Override
+    public void onCartCountChanged(int delta) {
+        cartCount = Math.max(0, cartCount + delta);
+        updateCartBadge();
+    }
+
+    private void updateWishlistBadge() {
+        if (tvWishlistCount == null) return;
+        tvWishlistCount.setText(String.valueOf(wishlistCount));
+        tvWishlistCount.setVisibility(wishlistCount > 0 ? View.VISIBLE : View.GONE);
+    }
+
+    private void updateCartBadge() {
+        if (tvCartCount == null) return;
+        tvCartCount.setText(String.valueOf(cartCount));
+        tvCartCount.setVisibility(cartCount > 0 ? View.VISIBLE : View.GONE);
+    }
+
+    // ─── RecyclerView ────────────────────────────────────────────────────────
 
     private void setupRecycler() {
         GridLayoutManager lm = new GridLayoutManager(this, 2);
         rvProducts.setLayoutManager(lm);
         productAdapter = new ProductListingAdapter(this, productList);
+        productAdapter.setBadgeListener(this);   // ← wire up badge callbacks
         rvProducts.setAdapter(productAdapter);
 
         rvProducts.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -153,7 +292,7 @@ public class ProductListingScreen extends AppCompatActivity {
         });
     }
 
-    // ─── Chips ─────────────────────────────────────────────────────────────────
+    // ─── Chips ───────────────────────────────────────────────────────────────
 
     private void setupChips() {
         chipCategory.setOnClickListener(v -> showFilterDialog("Category", convertCategory(), "category", tvChipCategory, "Category"));
@@ -164,7 +303,7 @@ public class ProductListingScreen extends AppCompatActivity {
         chipPack    .setOnClickListener(v -> showFilterDialogNoLabel("Pack",    convertPack(),    "pack"));
     }
 
-    // ─── Convert filter data ───────────────────────────────────────────────────
+    // ─── Convert filter data ──────────────────────────────────────────────────
 
     private List<FilterModel.FilterOption> convertCategory() {
         List<FilterModel.FilterOption> list = new ArrayList<>();
@@ -238,14 +377,13 @@ public class ProductListingScreen extends AppCompatActivity {
         return list;
     }
 
-    // ─── Beautiful Bottom-Sheet Filter Dialog ──────────────────────────────────
+    // ─── Filter dialog ───────────────────────────────────────────────────────
 
     private void showFilterDialog(String title,
                                   List<FilterModel.FilterOption> options,
                                   String filterKey,
                                   TextView chipLabel,
                                   String defaultLabel) {
-
         if (options == null || options.isEmpty()) {
             Toast.makeText(this, "No options available", Toast.LENGTH_SHORT).show();
             return;
@@ -265,16 +403,14 @@ public class ProductListingScreen extends AppCompatActivity {
             window.getAttributes().windowAnimations = R.style.BottomSheetAnimation;
         }
 
-        // Views inside dialog
-        TextView tvDialogTitle = dialog.findViewById(R.id.tv_filter_title);
-        RecyclerView rvOptions = dialog.findViewById(R.id.rv_filter_options);
-        MaterialButton btnClear = dialog.findViewById(R.id.btn_filter_clear);
-        MaterialButton btnApply = dialog.findViewById(R.id.btn_filter_apply);
-        ImageView btnClose      = dialog.findViewById(R.id.btn_filter_close);
+        TextView      tvDialogTitle = dialog.findViewById(R.id.tv_filter_title);
+        RecyclerView  rvOptions     = dialog.findViewById(R.id.rv_filter_options);
+        MaterialButton btnClear     = dialog.findViewById(R.id.btn_filter_clear);
+        MaterialButton btnApply     = dialog.findViewById(R.id.btn_filter_apply);
+        ImageView      btnClose     = dialog.findViewById(R.id.btn_filter_close);
 
         tvDialogTitle.setText(title);
 
-        // Make a working copy so user can cancel without affecting state
         List<FilterModel.FilterOption> workingCopy = new ArrayList<>();
         for (FilterModel.FilterOption opt : options) {
             workingCopy.add(new FilterModel.FilterOption(
@@ -323,7 +459,6 @@ public class ProductListingScreen extends AppCompatActivity {
         dialog.show();
     }
 
-    /** Same dialog but without updating a chip label TextView */
     private void showFilterDialogNoLabel(String title,
                                          List<FilterModel.FilterOption> options,
                                          String filterKey) {
@@ -331,7 +466,6 @@ public class ProductListingScreen extends AppCompatActivity {
     }
 
     private void updateChipActive(TextView chipLabel, boolean active) {
-        // Highlight parent chip when a filter is active
         if (chipLabel.getParent() instanceof LinearLayout) {
             LinearLayout parent = (LinearLayout) chipLabel.getParent();
             parent.setBackgroundResource(active ? R.drawable.chip_red_bg : R.drawable.chip_outline_bg);
@@ -341,7 +475,7 @@ public class ProductListingScreen extends AppCompatActivity {
         }
     }
 
-    // ─── Reload ────────────────────────────────────────────────────────────────
+    // ─── Reload ──────────────────────────────────────────────────────────────
 
     private void reloadProducts() {
         currentPage = 1;
@@ -350,10 +484,9 @@ public class ProductListingScreen extends AppCompatActivity {
         fetchProducts(true);
     }
 
-    // ─── API: Filters ──────────────────────────────────────────────────────────
+    // ─── API: Filters ─────────────────────────────────────────────────────────
 
     private void fetchFilters() {
-        // When opened directly (no categoryId), pass empty string → API returns ALL filter options
         String catParam = (categoryId != null && !categoryId.isEmpty()) ? categoryId : "";
         apiService.getFilters(new FiltersRequest(catParam, "1"))
                 .enqueue(new Callback<FiltersResponse>() {
@@ -368,7 +501,7 @@ public class ProductListingScreen extends AppCompatActivity {
                 });
     }
 
-    // ─── API: Products ─────────────────────────────────────────────────────────
+    // ─── API: Products ────────────────────────────────────────────────────────
 
     private void fetchProducts(boolean isFirstPage) {
         if (isLoading) return;
@@ -379,39 +512,35 @@ public class ProductListingScreen extends AppCompatActivity {
 
         List<Map<String, List<String>>> filters = new ArrayList<>();
 
-        // ── CATEGORY ──────────────────────────────────────────────────────────
-        // Rule:
-        //   • User has chosen categories via chip  → use those IDs
-        //   • Opened FROM a category (categoryId != null), no chip selection → use categoryId
-        //   • Opened DIRECTLY (categoryId == null), no chip selection         → empty list = ALL
+        // CATEGORY
         Map<String, List<String>> categoryMap = new HashMap<>();
         if (selectedFilters.containsKey("category") && !selectedFilters.get("category").isEmpty()) {
             categoryMap.put("category", new ArrayList<>(selectedFilters.get("category")));
         } else if (categoryId != null && !categoryId.isEmpty()) {
             categoryMap.put("category", Collections.singletonList(categoryId));
         } else {
-            categoryMap.put("category", new ArrayList<>()); // ALL
+            categoryMap.put("category", new ArrayList<>());
         }
         filters.add(categoryMap);
 
-        // ── PACK ──────────────────────────────────────────────────────────────
+        // PACK
         Map<String, List<String>> packMap = new HashMap<>();
         packMap.put("pack", selectedFilters.containsKey("pack")
                 ? new ArrayList<>(selectedFilters.get("pack")) : new ArrayList<>());
         filters.add(packMap);
 
-        // ── FIT ───────────────────────────────────────────────────────────────
+        // FIT
         Map<String, List<String>> fitMap = new HashMap<>();
         fitMap.put("fit", selectedFilters.containsKey("fit")
                 ? new ArrayList<>(selectedFilters.get("fit")) : new ArrayList<>());
         filters.add(fitMap);
 
-        // ── MAIN ──────────────────────────────────────────────────────────────
+        // MAIN
         Map<String, List<String>> mainMap = new HashMap<>();
         mainMap.put("main", new ArrayList<>());
         filters.add(mainMap);
 
-        // ── SECTION ───────────────────────────────────────────────────────────
+        // SECTION
         Map<String, List<String>> sectionMap = new HashMap<>();
         List<String> sectionList = selectedFilters.containsKey("section")
                 ? new ArrayList<>(selectedFilters.get("section")) : new ArrayList<>();
@@ -421,23 +550,24 @@ public class ProductListingScreen extends AppCompatActivity {
         sectionMap.put("section", sectionList);
         filters.add(sectionMap);
 
-        // ── PRICE ─────────────────────────────────────────────────────────────
+        // PRICE
         Map<String, List<String>> priceMap = new HashMap<>();
         priceMap.put("price", selectedFilters.containsKey("price")
                 ? new ArrayList<>(selectedFilters.get("price")) : new ArrayList<>());
         filters.add(priceMap);
 
-        // ── TAG ───────────────────────────────────────────────────────────────
+        // TAG
         Map<String, List<String>> tagMap = new HashMap<>();
         tagMap.put("tag", selectedFilters.containsKey("tag")
                 ? new ArrayList<>(selectedFilters.get("tag")) : new ArrayList<>());
         filters.add(tagMap);
 
+        // ── Pass search query into the request (uses the 4th "search" param) ──
         ListItemsRequest request = new ListItemsRequest(
                 "10",
                 String.valueOf(currentPage),
                 String.valueOf(PAGE_LIMIT),
-                "",
+                currentSearchQuery,   // ← was always "" before; now carries the query
                 filters
         );
 
@@ -479,14 +609,13 @@ public class ProductListingScreen extends AppCompatActivity {
                 isLoading = false;
                 hideFullLoader();
                 if (productAdapter != null) productAdapter.hideLoading();
-                Toast.makeText(ProductListingScreen.this,
-                        "Network error", Toast.LENGTH_LONG).show();
+                Toast.makeText(ProductListingScreen.this, "Network error", Toast.LENGTH_LONG).show();
                 if (currentPage > 1) currentPage--;
             }
         });
     }
 
-    // ─── Loader ────────────────────────────────────────────────────────────────
+    // ─── Loader ──────────────────────────────────────────────────────────────
 
     private void showFullLoader() {
         if (progressDialog == null) {
@@ -501,7 +630,7 @@ public class ProductListingScreen extends AppCompatActivity {
         if (progressDialog != null && progressDialog.isShowing()) progressDialog.dismiss();
     }
 
-    // ─── Bottom Nav ────────────────────────────────────────────────────────────
+    // ─── Bottom Nav ───────────────────────────────────────────────────────────
 
     private void setupBottomNav() {
         bottomNav = findViewById(R.id.bottom_nav);

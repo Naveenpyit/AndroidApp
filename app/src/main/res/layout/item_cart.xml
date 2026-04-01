@@ -54,16 +54,39 @@
             android:textSize="10sp"
             android:layout_marginTop="3dp" />
 
-        <!-- Price + GST -->
-        <TextView
-            android:id="@+id/tv_cart_price"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="₹198.13  (₹166 + 8.32 GST)"
-            android:textColor="#1A1A1A"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:layout_marginTop="4dp" />
+            android:weightSum="3"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/tv_cart_price"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="₹198.13"
+                android:textColor="#1A1A1A"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp" />
+            <TextView
+                android:id="@+id/tv_cart_mrp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="8.32 GST"
+                android:textColor="#1A1A1A"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp" />
+            <TextView
+                android:id="@+id/tv_cart_gst_note"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="166"
+                android:textColor="#1A1A1A"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
 
         <!-- Qty + Remove row -->
         <LinearLayout

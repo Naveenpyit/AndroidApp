@@ -7,6 +7,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -22,6 +23,11 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.view.WindowCompat;
 
 import com.example.myapplication.R;
+import com.example.myapplication.model.CityListRequest;
+import com.example.myapplication.model.CityListResponse;
+import com.example.myapplication.model.StateListResponse;
+import com.example.myapplication.network.ApiService;
+import com.example.myapplication.network.RetrofitClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -33,11 +39,17 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.button.MaterialButton;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class DeliveryAddressActivity extends AppCompatActivity implements OnMapReadyCallback {
 
+    private static final String TAG = "DeliveryAddressActivity";
     private static final int LOCATION_PERMISSION_REQUEST = 1001;
 
     // ── Views ─────────────────────────────────────────────────────────────────
@@ -54,6 +66,12 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
     private double currentLat = 20.5937, currentLng = 78.9629; // Default: India center
     private String resolvedAddress = "";
 
+    // ── API & Data ────────────────────────────────────────────────────────────
+    private ApiService apiService;
+    private List<StateListResponse.StateData> stateList = new ArrayList<>();
+    private List<CityListResponse.CityData> cityList = new ArrayList<>();
+    private String selectedStateId = "";
+
     // ── Intent data ───────────────────────────────────────────────────────────
     private String fullName, mobileNumber, email, businessType, gstNumber;
 
@@ -65,10 +83,12 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
         setupStatusBar();
         getIntentData();
         initializeViews();
+        apiService = RetrofitClient.getClient(this);
         setupSpinners();
         setupClickListeners();
         setupMap();
         requestLocationPermission();
+        fetchStateList();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -111,9 +131,41 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
 
     private void setupSpinners() {
         setSpinner(spinnerAddressType, R.array.address_types);
-        setSpinner(spinnerCity,        R.array.cities);
-        setSpinner(spinnerState,       R.array.states);
         setSpinner(spinnerCountry,     R.array.countries);
+        
+        // Initialize state and city spinners with loading state
+        List<String> loadingState = new ArrayList<>();
+        loadingState.add("Loading States...");
+        ArrayAdapter<String> stateLoadingAdapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_item, loadingState);
+        stateLoadingAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerState.setAdapter(stateLoadingAdapter);
+        spinnerState.setEnabled(false);
+        
+        List<String> loadingCity = new ArrayList<>();
+        loadingCity.add("Select State First");
+        ArrayAdapter<String> cityLoadingAdapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_item, loadingCity);
+        cityLoadingAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerCity.setAdapter(cityLoadingAdapter);
+        spinnerCity.setEnabled(false);
+        
+        // Add listener for state selection to fetch cities
+        spinnerState.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, android.view.View view, int position, long id) {
+                if (position > 0 && !stateList.isEmpty()) {
+                    StateListResponse.StateData selectedState = stateList.get(position - 1);
+                    selectedStateId = selectedState.getNId();
+                    Log.d(TAG, "State selected: " + selectedState.getCStateName() + " (ID: " + selectedStateId + ")");
+                    fetchCityList(selectedStateId);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {
+            }
+        });
     }
 
     private void setSpinner(Spinner spinner, int arrayRes) {
@@ -121,6 +173,137 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
                 this, arrayRes, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // API Methods
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private void fetchStateList() {
+        Log.d(TAG, "Fetching state list...");
+        apiService.getStateList().enqueue(new Callback<StateListResponse>() {
+            @Override
+            public void onResponse(Call<StateListResponse> call, Response<StateListResponse> response) {
+                Log.d(TAG, "State List API Response received. Code: " + response.code() + ", isSuccessful: " + response.isSuccessful());
+                
+                if (response.isSuccessful() && response.body() != null) {
+                    StateListResponse stateResponse = response.body();
+                    Log.d(TAG, "State List Response: Status=" + stateResponse.getNStatus() + 
+                            ", Message=" + stateResponse.getCMessage() + 
+                            ", Data size=" + (stateResponse.getJData() != null ? stateResponse.getJData().size() : 0));
+                    
+                    if (stateResponse.getNStatus() == 1 && stateResponse.getJData() != null) {
+                        stateList = stateResponse.getJData();
+                        Log.d(TAG, "✓ States fetched successfully: " + stateList.size() + " states");
+                        for (int i = 0; i < Math.min(3, stateList.size()); i++) {
+                            Log.d(TAG, "  State " + i + ": " + stateList.get(i).getCStateName() + " (ID: " + stateList.get(i).getNId() + ")");
+                        }
+                        updateStateSpinner();
+                    } else {
+                        Log.e(TAG, "✗ State API error: Status=" + stateResponse.getNStatus() + ", Message=" + stateResponse.getCMessage());
+                        Toast.makeText(DeliveryAddressActivity.this, 
+                                "Failed to fetch states: " + stateResponse.getCMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    String errorBody = "";
+                    try {
+                        errorBody = response.errorBody().string();
+                    } catch (Exception e) {
+                        errorBody = e.getMessage();
+                    }
+                    Log.e(TAG, "✗ State API failed: Code=" + response.code() + ", Error=" + errorBody);
+                    Toast.makeText(DeliveryAddressActivity.this, 
+                            "Error fetching states (Code: " + response.code() + ")", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<StateListResponse> call, Throwable t) {
+                Log.e(TAG, "✗ State API Failure: " + t.getMessage(), t);
+                Toast.makeText(DeliveryAddressActivity.this, 
+                        "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void fetchCityList(String stateId) {
+        Log.d(TAG, "Fetching city list for state ID: " + stateId);
+        CityListRequest request = new CityListRequest("1");
+        apiService.getCityList(request).enqueue(new Callback<CityListResponse>() {
+            @Override
+            public void onResponse(Call<CityListResponse> call, Response<CityListResponse> response) {
+                Log.d(TAG, "City List API Response received. Code: " + response.code() + ", isSuccessful: " + response.isSuccessful());
+                
+                if (response.isSuccessful() && response.body() != null) {
+                    CityListResponse cityResponse = response.body();
+                    Log.d(TAG, "City List Response: Status=" + cityResponse.getNStatus() + 
+                            ", Message=" + cityResponse.getCMessage() + 
+                            ", Data size=" + (cityResponse.getJData() != null ? cityResponse.getJData().size() : 0));
+                    
+                    if (cityResponse.getNStatus() == 1 && cityResponse.getJData() != null) {
+                        cityList = cityResponse.getJData();
+                        Log.d(TAG, "✓ Cities fetched successfully: " + cityList.size() + " cities");
+                        for (int i = 0; i < Math.min(3, cityList.size()); i++) {
+                            Log.d(TAG, "  City " + i + ": " + cityList.get(i).getCCityName() + " (ID: " + cityList.get(i).getNId() + ")");
+                        }
+                        updateCitySpinner();
+                    } else {
+                        Log.e(TAG, "✗ City API error: Status=" + cityResponse.getNStatus() + ", Message=" + cityResponse.getCMessage());
+                        Toast.makeText(DeliveryAddressActivity.this, 
+                                "Failed to fetch cities: " + cityResponse.getCMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    String errorBody = "";
+                    try {
+                        errorBody = response.errorBody().string();
+                    } catch (Exception e) {
+                        errorBody = e.getMessage();
+                    }
+                    Log.e(TAG, "✗ City API failed: Code=" + response.code() + ", Error=" + errorBody);
+                    Toast.makeText(DeliveryAddressActivity.this, 
+                            "Error fetching cities (Code: " + response.code() + ")", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<CityListResponse> call, Throwable t) {
+                Log.e(TAG, "✗ City API Failure: " + t.getMessage(), t);
+                Toast.makeText(DeliveryAddressActivity.this, 
+                        "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void updateStateSpinner() {
+        List<String> stateNames = new ArrayList<>();
+        stateNames.add("Select State");
+        for (StateListResponse.StateData state : stateList) {
+            stateNames.add(state.getCStateName());
+        }
+        
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_item, stateNames);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerState.setAdapter(adapter);
+        spinnerState.setEnabled(true);
+        Log.d(TAG, "State spinner updated with " + stateNames.size() + " items");
+        Toast.makeText(DeliveryAddressActivity.this, (stateNames.size() - 1) + " states loaded", Toast.LENGTH_SHORT).show();
+    }
+
+    private void updateCitySpinner() {
+        List<String> cityNames = new ArrayList<>();
+        cityNames.add("Select City");
+        for (CityListResponse.CityData city : cityList) {
+            cityNames.add(city.getCCityName());
+        }
+        
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_item, cityNames);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerCity.setAdapter(adapter);
+        spinnerCity.setEnabled(true);
+        Log.d(TAG, "City spinner updated with " + cityNames.size() + " items");
+        Toast.makeText(DeliveryAddressActivity.this, (cityNames.size() - 1) + " cities loaded", Toast.LENGTH_SHORT).show();
     }
 
     private void setupClickListeners() {

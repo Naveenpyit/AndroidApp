@@ -1,9 +1,12 @@
 package com.example.myapplication.activity;
 
+import static android.content.Intent.getIntent;
+
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -27,6 +30,8 @@ import retrofit2.Response;
 
 public class Otp_Screen extends AppCompatActivity {
 
+    private static final String TAG = "Otp_Screen";
+
     private MaterialButton btn_submit;
     private PinView pinview;
     private ProgressDialog progressDialog;
@@ -37,6 +42,7 @@ public class Otp_Screen extends AppCompatActivity {
     private String mobile;
 
     @Override
+
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.otp_screen);
@@ -62,6 +68,7 @@ public class Otp_Screen extends AppCompatActivity {
             if (otp.length() != 6) {
                 Toast.makeText(this, "Enter a valid 6-digit OTP",
                         Toast.LENGTH_SHORT).show();
+
                 return;
             }
 
@@ -81,30 +88,46 @@ public class Otp_Screen extends AppCompatActivity {
                                    Response<VerifyOtpResponse> response) {
                 hideLoader();
 
+                Log.d(TAG, "OTP Verify Response received. Successful: " + response.isSuccessful());
+
                 if (response.isSuccessful() && response.body() != null) {
 
-                    if (response.body().getN_status() == 1) {
+                    Log.d(TAG, "OTP Verify Response Body: Status=" + response.body().getNStatus() + ", Message=" + response.body().getCMessage() + ", Data=" + response.body().getJData());
 
-                        String token  = response.body().getJ_data().get(0).getJ_token();
-                        String access = response.body().getJ_data().get(0).getJ_access();
+                    if (response.body().getNStatus() == 1) {
+                        try {
+                            VerifyOtpResponse.TokenData tokenData = response.body().getJData().get(0);
 
-                        tokenManager.saveToken(token);
-                        tokenManager.saveAccess(access);
+                            // ✅ Save token & access
+                            tokenManager.saveToken(tokenData.getJToken());
+                            tokenManager.saveAccess(tokenData.getJAccess());
 
-                        // Refresh token silently in background
-                        refreshToken();
+                            // ✅ FIXED — LoginData object-ல இருந்து userId எடு
+                            if (tokenData.getJLogin() != null && !tokenData.getJLogin().isEmpty()) {
 
-                        Toast.makeText(Otp_Screen.this,
-                                "OTP Verified", Toast.LENGTH_SHORT).show();
+                                VerifyOtpResponse.LoginData loginData = tokenData.getJLogin().get(0);
 
-                        startActivity(new Intent(Otp_Screen.this,
-                                SetupStepsActivity.class));
-                        finish();
+                                String userId   = loginData.getNUserId();   // "77" ✅
+                                String userName = loginData.getCUserName(); // "Nivetha"
+                                String mobile2  = loginData.getNUserMobile();
 
-                    } else {
-                        Toast.makeText(Otp_Screen.this,
-                                response.body().getC_message(),
-                                Toast.LENGTH_SHORT).show();
+                                tokenManager.saveUserId(userId);
+
+                                Log.d(TAG, "Saved userId = " + userId);     // ✅ 77 வரும்
+                                Log.d(TAG, "Saved name   = " + userName);
+                            }
+
+                            refreshToken();
+
+                            Toast.makeText(Otp_Screen.this, "OTP Verified", Toast.LENGTH_SHORT).show();
+                            startActivity(new Intent(Otp_Screen.this, SetupStepsActivity.class));
+                            finish();
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            Toast.makeText(Otp_Screen.this,
+                                    "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
                     }
                 } else {
                     Toast.makeText(Otp_Screen.this,
@@ -116,6 +139,7 @@ public class Otp_Screen extends AppCompatActivity {
             @Override
             public void onFailure(Call<VerifyOtpResponse> call, Throwable t) {
                 hideLoader();
+                Log.e(TAG, "OTP Verify Failure: " + t.getMessage());
                 Toast.makeText(Otp_Screen.this,
                         "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
