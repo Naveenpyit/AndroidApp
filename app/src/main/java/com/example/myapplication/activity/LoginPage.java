@@ -62,12 +62,14 @@ public class LoginPage extends AppCompatActivity {
                     hideLoader();
 
                     if (response.isSuccessful() && response.body() != null) {
+
                         Toast.makeText(LoginPage.this,
                                 "OTP Sent Successfully", Toast.LENGTH_SHORT).show();
 
                         Intent i = new Intent(LoginPage.this, Otp_Screen.class);
                         i.putExtra("mobile", mobile);
                         startActivity(i);
+
                     } else {
                         Toast.makeText(LoginPage.this,
                                 "Failed to send OTP. Try again.", Toast.LENGTH_SHORT).show();
@@ -84,8 +86,7 @@ public class LoginPage extends AppCompatActivity {
         });
     }
 
-    // ── Loader ────────────────────────────────────────────────────────────────
-
+    // Loader
     private void setupLoader() {
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Sending OTP...");
@@ -105,8 +106,7 @@ public class LoginPage extends AppCompatActivity {
         }
     }
 
-    // ── Status Bar ────────────────────────────────────────────────────────────
-
+    // Status bar
     private void setupStatusBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             getWindow().setStatusBarColor(

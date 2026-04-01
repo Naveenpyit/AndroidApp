@@ -1,9 +1,9 @@
 package com.example.myapplication.activity;
 
-import static android.content.Intent.getIntent;
-
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,6 +16,8 @@ import androidx.core.view.WindowCompat;
 import com.example.myapplication.R;
 import com.example.myapplication.model.RefreshTokenRequest;
 import com.example.myapplication.model.RefreshTokenResponse;
+import com.example.myapplication.model.RegisterDetailsRequest;
+import com.example.myapplication.model.RegisterDetailsResponse;
 import com.example.myapplication.model.VerifyOtpRequest;
 import com.example.myapplication.model.VerifyOtpResponse;
 import com.example.myapplication.network.ApiService;
@@ -35,24 +37,19 @@ public class Otp_Screen extends AppCompatActivity {
     private MaterialButton btn_submit;
     private PinView pinview;
     private ProgressDialog progressDialog;
-
     private ApiService apiService;
     private TokenManager tokenManager;
-
     private String mobile;
 
     @Override
-
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.otp_screen);
 
         btn_submit = findViewById(R.id.btn_submit);
-        pinview    = findViewById(R.id.pinview);
-
-        apiService    = RetrofitClient.getClient(this);
-        tokenManager  = new TokenManager(this);
-
+        pinview = findViewById(R.id.pinview);
+        apiService = RetrofitClient.getClient(this);
+        tokenManager = new TokenManager(this);
 
         mobile = getIntent().getStringExtra("mobile");
         if (mobile == null) mobile = "";
@@ -61,14 +58,11 @@ public class Otp_Screen extends AppCompatActivity {
         setupStatusBar();
 
         btn_submit.setOnClickListener(v -> {
-
             String otp = pinview.getText() != null
                     ? pinview.getText().toString().trim() : "";
 
             if (otp.length() != 6) {
-                Toast.makeText(this, "Enter a valid 6-digit OTP",
-                        Toast.LENGTH_SHORT).show();
-
+                Toast.makeText(this, "Enter valid 6-digit OTP", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -77,125 +71,209 @@ public class Otp_Screen extends AppCompatActivity {
         });
     }
 
-
+    // ✅ VERIFY OTP
     private void verifyOtp(String mobile, String otp) {
 
-        VerifyOtpRequest request = new VerifyOtpRequest(mobile, otp);
+        apiService.verifyOtp(new VerifyOtpRequest(mobile, otp))
+                .enqueue(new Callback<VerifyOtpResponse>() {
 
-        apiService.verifyOtp(request).enqueue(new Callback<VerifyOtpResponse>() {
-            @Override
-            public void onResponse(Call<VerifyOtpResponse> call,
-                                   Response<VerifyOtpResponse> response) {
-                hideLoader();
+                    @Override
+                    public void onResponse(Call<VerifyOtpResponse> call,
+                                           Response<VerifyOtpResponse> res) {
 
-                Log.d(TAG, "OTP Verify Response received. Successful: " + response.isSuccessful());
+                        hideLoader();
 
-                if (response.isSuccessful() && response.body() != null) {
+                        if (!res.isSuccessful() || res.body() == null
+                                || res.body().getNStatus() != 1) {
 
-                    Log.d(TAG, "OTP Verify Response Body: Status=" + response.body().getNStatus() + ", Message=" + response.body().getCMessage() + ", Data=" + response.body().getJData());
-
-                    if (response.body().getNStatus() == 1) {
-                        try {
-                            VerifyOtpResponse.TokenData tokenData = response.body().getJData().get(0);
-
-                            // ✅ Save token & access
-                            tokenManager.saveToken(tokenData.getJToken());
-                            tokenManager.saveAccess(tokenData.getJAccess());
-
-                            // ✅ FIXED — LoginData object-ல இருந்து userId எடு
-                            if (tokenData.getJLogin() != null && !tokenData.getJLogin().isEmpty()) {
-
-                                VerifyOtpResponse.LoginData loginData = tokenData.getJLogin().get(0);
-
-                                String userId   = loginData.getNUserId();   // "77" ✅
-                                String userName = loginData.getCUserName(); // "Nivetha"
-                                String mobile2  = loginData.getNUserMobile();
-
-                                tokenManager.saveUserId(userId);
-
-                                Log.d(TAG, "Saved userId = " + userId);     // ✅ 77 வரும்
-                                Log.d(TAG, "Saved name   = " + userName);
-                            }
-
-                            refreshToken();
-
-                            Toast.makeText(Otp_Screen.this, "OTP Verified", Toast.LENGTH_SHORT).show();
-                            startActivity(new Intent(Otp_Screen.this, SetupStepsActivity.class));
-                            finish();
-
-                        } catch (Exception e) {
-                            e.printStackTrace();
                             Toast.makeText(Otp_Screen.this,
-                                    "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    "Verification failed. Try again.",
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        // ✅ LOGIN SUCCESS SAVE
+                        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+                        prefs.edit()
+                                .putBoolean("is_logged_in", true)
+                                .putString("last_screen", "SetupSteps")
+                                .apply();
+
+                        // ✅ TOKEN SAVE
+                        VerifyOtpResponse.TokenData token = res.body().getJData().get(0);
+                        tokenManager.saveToken(token.getJToken());
+                        tokenManager.saveAccess(token.getJAccess());
+
+                        if (token.getJLogin() != null && !token.getJLogin().isEmpty()) {
+                            tokenManager.saveUserId(token.getJLogin().get(0).getNUserId());
+                        }
+
+                        refreshTokenSilently();
+
+                        int processType = token.getNProcessType();
+
+                        switch (processType) {
+
+                            case 3:
+                                goToMain();
+                                break;
+
+                            case 2:
+                                showVerificationPendingAlert();
+                                break;
+
+                            case 1:
+                            default:
+                                showLoader("Loading details...");
+                                fetchRegisterDetails();
+                                break;
                         }
                     }
-                } else {
-                    Toast.makeText(Otp_Screen.this,
-                            "Verification failed. Try again.",
-                            Toast.LENGTH_SHORT).show();
-                }
-            }
 
-            @Override
-            public void onFailure(Call<VerifyOtpResponse> call, Throwable t) {
-                hideLoader();
-                Log.e(TAG, "OTP Verify Failure: " + t.getMessage());
-                Toast.makeText(Otp_Screen.this,
-                        "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
+                    @Override
+                    public void onFailure(Call<VerifyOtpResponse> call, Throwable t) {
+                        hideLoader();
+                        Toast.makeText(Otp_Screen.this,
+                                "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
-    // ── Refresh Token API (silent, no loader) ─────────────────────────────────
+    // ✅ FETCH REGISTER DETAILS
+    private void fetchRegisterDetails() {
 
-    private void refreshToken() {
+        apiService.getRegisterDetails(new RegisterDetailsRequest(mobile))
+                .enqueue(new Callback<RegisterDetailsResponse>() {
+
+                    @Override
+                    public void onResponse(Call<RegisterDetailsResponse> call,
+                                           Response<RegisterDetailsResponse> res) {
+
+                        hideLoader();
+
+                        if (!res.isSuccessful() || res.body() == null) {
+                            Toast.makeText(Otp_Screen.this,
+                                    "Failed to load details",
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        RegisterDetailsResponse body = res.body();
+
+                        if (body.getNStatus() != 1) {
+                            Toast.makeText(Otp_Screen.this,
+                                    body.getCMessage(), Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        routeToScreen(body.getNStep());
+                    }
+
+                    @Override
+                    public void onFailure(Call<RegisterDetailsResponse> call, Throwable t) {
+                        hideLoader();
+                        Toast.makeText(Otp_Screen.this,
+                                "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    // ✅ ROUTING
+    private void routeToScreen(int step) {
+
+        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+
+        if (step == 1) {
+
+            prefs.edit().putString("last_screen", "OwnerDetails").apply();
+            startActivity(new Intent(this, OwnerDetailsActivity.class));
+
+        } else if (step == 2) {
+
+            prefs.edit().putString("last_screen", "BusinessDetails").apply();
+            startActivity(new Intent(this, BusinessDetailsActivity.class));
+
+        } else if (step == 3) {
+
+            prefs.edit().putString("last_screen", "SetupSteps").apply();
+            startActivity(new Intent(this, SetupStepsActivity.class));
+
+        } else {
+
+            prefs.edit().putString("last_screen", "Main").apply();
+            startActivity(new Intent(this, MainActivity.class));
+        }
+
+        finish();
+    }
+
+    // ✅ NAVIGATION
+    private void goToMain() {
+
+        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        prefs.edit().putString("last_screen", "Main").apply();
+
+        Intent i = new Intent(this, MainActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(i);
+        finish();
+    }
+
+    private void showVerificationPendingAlert() {
+        new AlertDialog.Builder(this)
+                .setTitle("Verification Pending")
+                .setMessage("Please wait for approval")
+                .setCancelable(false)
+                .setPositiveButton("OK", (d, w) -> {
+                    goToMain();
+                })
+                .show();
+    }
+
+    // ✅ TOKEN REFRESH
+    private void refreshTokenSilently() {
 
         String access = tokenManager.getAccess();
-        RefreshTokenRequest request = new RefreshTokenRequest(access);
+        if (access == null || access.isEmpty()) return;
 
-        apiService.refreshToken(request).enqueue(new Callback<RefreshTokenResponse>() {
-            @Override
-            public void onResponse(Call<RefreshTokenResponse> call,
-                                   Response<RefreshTokenResponse> response) {
+        apiService.refreshToken(new RefreshTokenRequest(access))
+                .enqueue(new Callback<RefreshTokenResponse>() {
+                    @Override
+                    public void onResponse(Call<RefreshTokenResponse> call,
+                                           Response<RefreshTokenResponse> res) {
 
-                if (response.isSuccessful() && response.body() != null) {
-                    tokenManager.saveToken(
-                            response.body().getJ_data().get(0).getJ_token());
-                    tokenManager.saveAccess(
-                            response.body().getJ_data().get(0).getJ_access());
-                }
-            }
+                        if (res.isSuccessful() && res.body() != null
+                                && res.body().getJ_data() != null
+                                && !res.body().getJ_data().isEmpty()) {
 
-            @Override
-            public void onFailure(Call<RefreshTokenResponse> call, Throwable t) {
-                // Silent failure — token refresh is background task
-            }
-        });
+                            tokenManager.saveToken(res.body().getJ_data().get(0).getJ_token());
+                            tokenManager.saveAccess(res.body().getJ_data().get(0).getJ_access());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<RefreshTokenResponse> call, Throwable t) {
+                        Log.e(TAG, "Token refresh failed");
+                    }
+                });
     }
 
-    // ── Loader ────────────────────────────────────────────────────────────────
-
+    // ✅ LOADER
     private void setupLoader() {
         progressDialog = new ProgressDialog(this);
         progressDialog.setCancelable(false);
-        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
     }
 
-    private void showLoader(String message) {
-        if (progressDialog != null && !progressDialog.isShowing()) {
-            progressDialog.setMessage(message);
-            progressDialog.show();
-        }
+    private void showLoader(String msg) {
+        progressDialog.setMessage(msg);
+        progressDialog.show();
     }
 
     private void hideLoader() {
-        if (progressDialog != null && progressDialog.isShowing()) {
-            progressDialog.dismiss();
-        }
+        if (progressDialog.isShowing()) progressDialog.dismiss();
     }
 
-    // ── Status Bar ────────────────────────────────────────────────────────────
-
+    // ✅ STATUS BAR
     private void setupStatusBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             getWindow().setStatusBarColor(

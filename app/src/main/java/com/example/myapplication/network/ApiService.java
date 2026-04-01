@@ -25,6 +25,10 @@ import com.example.myapplication.model.ProductDetailRequest;
 import com.example.myapplication.model.ProductDetailResponse;
 import com.example.myapplication.model.RefreshTokenRequest;
 import com.example.myapplication.model.RefreshTokenResponse;
+import com.example.myapplication.model.RegisterDetailsRequest;
+import com.example.myapplication.model.RegisterDetailsResponse;
+import com.example.myapplication.model.RegisterInsertRequest;
+import com.example.myapplication.model.RegisterInsertResponse;
 import com.example.myapplication.model.SendOtpRequest;
 import com.example.myapplication.model.SendOtpResponse;
 import com.example.myapplication.model.StateListResponse;
@@ -86,9 +90,20 @@ public interface ApiService {
     @POST("list-wishlist")
     Call<ListWishlistResponse> listWishlist(@Body ListWishlistRequest request);
 
+    @POST("register-details")
+    Call<RegisterDetailsResponse> getRegisterDetails(
+            @Body RegisterDetailsRequest request);
+
+    // ── Registration: save each step ─────────────────────────────────────────
+    @POST("register-insert")
+    Call<RegisterInsertResponse> registerInsert(
+            @Body RegisterInsertRequest request);
+
+    // ── Location: state list ──────────────────────────────────────────────────
     @GET("state-list")
     Call<StateListResponse> getStateList();
 
+    // ── Location: city list for a state ──────────────────────────────────────
     @POST("city-list")
     Call<CityListResponse> getCityList(@Body CityListRequest request);
 }

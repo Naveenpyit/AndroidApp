@@ -42,14 +42,12 @@ public class OnBoadingAdapter extends RecyclerView.Adapter<OnBoadingAdapter.View
     public void onBindViewHolder(@NonNull OnBoadingAdapter.ViewHolder holder, int position) {
         holder.lets_started.setText(header[position]);
 
-        // ✅ "Let's Get Started" text in red
+
         holder.lets_started.setTextColor(Color.parseColor("#E41D27"));
 
         holder.image.setImageResource(image[position]);
         holder.title.setText(title[position]);
         holder.desc.setText(subtitle[position]);
-
-        // Animations
         holder.lets_started.setTranslationY(600f);
         holder.image.setTranslationY(-600f);
         holder.title.setTranslationX(-600f);

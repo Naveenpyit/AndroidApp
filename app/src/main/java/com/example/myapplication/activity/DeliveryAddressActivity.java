@@ -1,6 +1,8 @@
 package com.example.myapplication.activity;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -8,527 +10,307 @@ import android.location.Geocoder;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.RadioGroup;
-import android.widget.Spinner;
-import android.widget.TextView;
-import android.widget.Toast;
-
+import android.view.View;
+import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.view.WindowCompat;
 
 import com.example.myapplication.R;
-import com.example.myapplication.model.CityListRequest;
-import com.example.myapplication.model.CityListResponse;
-import com.example.myapplication.model.StateListResponse;
+import com.example.myapplication.model.*;
 import com.example.myapplication.network.ApiService;
 import com.example.myapplication.network.RetrofitClient;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.location.*;
+import com.google.android.gms.maps.*;
+import com.google.android.gms.maps.model.*;
 import com.google.android.material.button.MaterialButton;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import retrofit2.*;
 
 public class DeliveryAddressActivity extends AppCompatActivity implements OnMapReadyCallback {
 
-    private static final String TAG = "DeliveryAddressActivity";
-    private static final int LOCATION_PERMISSION_REQUEST = 1001;
+    private static final int LOCATION_PERMISSION_REQ = 1001;
 
-    // ── Views ─────────────────────────────────────────────────────────────────
-    private ImageView backArrow;
+    private Spinner spinnerState, spinnerCity;
+    private EditText etAddressLine, etPinCode;
     private TextView tvCurrentLocation;
     private MaterialButton btnUseLocation, btnContinue;
-    private RadioGroup rgAddressType;
-    private Spinner spinnerAddressType, spinnerCity, spinnerState, spinnerCountry;
-    private EditText etAddressLine, etPinCode;
 
-    // ── Map & Location ────────────────────────────────────────────────────────
     private GoogleMap googleMap;
     private FusedLocationProviderClient fusedLocationClient;
-    private double currentLat = 20.5937, currentLng = 78.9629; // Default: India center
-    private String resolvedAddress = "";
 
-    // ── API & Data ────────────────────────────────────────────────────────────
+    private double lat = 0.0, lng = 0.0;
+
     private ApiService apiService;
+    private ProgressDialog dialog;
+
     private List<StateListResponse.StateData> stateList = new ArrayList<>();
     private List<CityListResponse.CityData> cityList = new ArrayList<>();
-    private String selectedStateId = "";
 
-    // ── Intent data ───────────────────────────────────────────────────────────
-    private String fullName, mobileNumber, email, businessType, gstNumber;
+    private String selectedStateId = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_delivery_address);
 
-        setupStatusBar();
-        getIntentData();
-        initializeViews();
+        initViews();
+
         apiService = RetrofitClient.getClient(this);
-        setupSpinners();
-        setupClickListeners();
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        setupLoader();
         setupMap();
-        requestLocationPermission();
-        fetchStateList();
+        setupClick();
+
+        fetchStateList(); // API CALL
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Setup
-    // ─────────────────────────────────────────────────────────────────────────
-
-    private void setupStatusBar() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            getWindow().setStatusBarColor(
-                    getResources().getColor(R.color.red_primary, getTheme()));
-            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
-                    .setAppearanceLightStatusBars(false);
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setStatusBarColor(
-                    getResources().getColor(R.color.red_primary));
-        }
+    private void initViews() {
+        spinnerState = findViewById(R.id.spinner_state);
+        spinnerCity = findViewById(R.id.spinner_city);
+        etAddressLine = findViewById(R.id.et_address_line);
+        etPinCode = findViewById(R.id.et_pin_code);
+        tvCurrentLocation = findViewById(R.id.tv_current_location);
+        btnUseLocation = findViewById(R.id.btn_use_location);
+        btnContinue = findViewById(R.id.btn_continue);
     }
 
-    private void getIntentData() {
-        fullName     = getIntent().getStringExtra("fullName");
-        mobileNumber = getIntent().getStringExtra("mobileNumber");
-        email        = getIntent().getStringExtra("email");
-        businessType = getIntent().getStringExtra("businessType");
-        gstNumber    = getIntent().getStringExtra("gstNumber");
-    }
-
-    private void initializeViews() {
-        backArrow          = findViewById(R.id.back_arrow);
-        tvCurrentLocation  = findViewById(R.id.tv_current_location);
-        btnUseLocation     = findViewById(R.id.btn_use_location);
-        btnContinue        = findViewById(R.id.btn_continue);
-        rgAddressType      = findViewById(R.id.rg_address_type);
-        spinnerAddressType = findViewById(R.id.spinner_address_type);
-        spinnerCity        = findViewById(R.id.spinner_city);
-        spinnerState       = findViewById(R.id.spinner_state);
-        spinnerCountry     = findViewById(R.id.spinner_country);
-        etAddressLine      = findViewById(R.id.et_address_line);
-        etPinCode          = findViewById(R.id.et_pin_code);
-    }
-
-    private void setupSpinners() {
-        setSpinner(spinnerAddressType, R.array.address_types);
-        setSpinner(spinnerCountry,     R.array.countries);
-        
-        // Initialize state and city spinners with loading state
-        List<String> loadingState = new ArrayList<>();
-        loadingState.add("Loading States...");
-        ArrayAdapter<String> stateLoadingAdapter = new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_item, loadingState);
-        stateLoadingAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerState.setAdapter(stateLoadingAdapter);
-        spinnerState.setEnabled(false);
-        
-        List<String> loadingCity = new ArrayList<>();
-        loadingCity.add("Select State First");
-        ArrayAdapter<String> cityLoadingAdapter = new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_item, loadingCity);
-        cityLoadingAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerCity.setAdapter(cityLoadingAdapter);
-        spinnerCity.setEnabled(false);
-        
-        // Add listener for state selection to fetch cities
-        spinnerState.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(android.widget.AdapterView<?> parent, android.view.View view, int position, long id) {
-                if (position > 0 && !stateList.isEmpty()) {
-                    StateListResponse.StateData selectedState = stateList.get(position - 1);
-                    selectedStateId = selectedState.getNId();
-                    Log.d(TAG, "State selected: " + selectedState.getCStateName() + " (ID: " + selectedStateId + ")");
-                    fetchCityList(selectedStateId);
-                }
-            }
-
-            @Override
-            public void onNothingSelected(android.widget.AdapterView<?> parent) {
-            }
-        });
-    }
-
-    private void setSpinner(Spinner spinner, int arrayRes) {
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
-                this, arrayRes, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // API Methods
-    // ─────────────────────────────────────────────────────────────────────────
-
-    private void fetchStateList() {
-        Log.d(TAG, "Fetching state list...");
-        apiService.getStateList().enqueue(new Callback<StateListResponse>() {
-            @Override
-            public void onResponse(Call<StateListResponse> call, Response<StateListResponse> response) {
-                Log.d(TAG, "State List API Response received. Code: " + response.code() + ", isSuccessful: " + response.isSuccessful());
-                
-                if (response.isSuccessful() && response.body() != null) {
-                    StateListResponse stateResponse = response.body();
-                    Log.d(TAG, "State List Response: Status=" + stateResponse.getNStatus() + 
-                            ", Message=" + stateResponse.getCMessage() + 
-                            ", Data size=" + (stateResponse.getJData() != null ? stateResponse.getJData().size() : 0));
-                    
-                    if (stateResponse.getNStatus() == 1 && stateResponse.getJData() != null) {
-                        stateList = stateResponse.getJData();
-                        Log.d(TAG, "✓ States fetched successfully: " + stateList.size() + " states");
-                        for (int i = 0; i < Math.min(3, stateList.size()); i++) {
-                            Log.d(TAG, "  State " + i + ": " + stateList.get(i).getCStateName() + " (ID: " + stateList.get(i).getNId() + ")");
-                        }
-                        updateStateSpinner();
-                    } else {
-                        Log.e(TAG, "✗ State API error: Status=" + stateResponse.getNStatus() + ", Message=" + stateResponse.getCMessage());
-                        Toast.makeText(DeliveryAddressActivity.this, 
-                                "Failed to fetch states: " + stateResponse.getCMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    String errorBody = "";
-                    try {
-                        errorBody = response.errorBody().string();
-                    } catch (Exception e) {
-                        errorBody = e.getMessage();
-                    }
-                    Log.e(TAG, "✗ State API failed: Code=" + response.code() + ", Error=" + errorBody);
-                    Toast.makeText(DeliveryAddressActivity.this, 
-                            "Error fetching states (Code: " + response.code() + ")", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<StateListResponse> call, Throwable t) {
-                Log.e(TAG, "✗ State API Failure: " + t.getMessage(), t);
-                Toast.makeText(DeliveryAddressActivity.this, 
-                        "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void fetchCityList(String stateId) {
-        Log.d(TAG, "Fetching city list for state ID: " + stateId);
-        CityListRequest request = new CityListRequest("1");
-        apiService.getCityList(request).enqueue(new Callback<CityListResponse>() {
-            @Override
-            public void onResponse(Call<CityListResponse> call, Response<CityListResponse> response) {
-                Log.d(TAG, "City List API Response received. Code: " + response.code() + ", isSuccessful: " + response.isSuccessful());
-                
-                if (response.isSuccessful() && response.body() != null) {
-                    CityListResponse cityResponse = response.body();
-                    Log.d(TAG, "City List Response: Status=" + cityResponse.getNStatus() + 
-                            ", Message=" + cityResponse.getCMessage() + 
-                            ", Data size=" + (cityResponse.getJData() != null ? cityResponse.getJData().size() : 0));
-                    
-                    if (cityResponse.getNStatus() == 1 && cityResponse.getJData() != null) {
-                        cityList = cityResponse.getJData();
-                        Log.d(TAG, "✓ Cities fetched successfully: " + cityList.size() + " cities");
-                        for (int i = 0; i < Math.min(3, cityList.size()); i++) {
-                            Log.d(TAG, "  City " + i + ": " + cityList.get(i).getCCityName() + " (ID: " + cityList.get(i).getNId() + ")");
-                        }
-                        updateCitySpinner();
-                    } else {
-                        Log.e(TAG, "✗ City API error: Status=" + cityResponse.getNStatus() + ", Message=" + cityResponse.getCMessage());
-                        Toast.makeText(DeliveryAddressActivity.this, 
-                                "Failed to fetch cities: " + cityResponse.getCMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    String errorBody = "";
-                    try {
-                        errorBody = response.errorBody().string();
-                    } catch (Exception e) {
-                        errorBody = e.getMessage();
-                    }
-                    Log.e(TAG, "✗ City API failed: Code=" + response.code() + ", Error=" + errorBody);
-                    Toast.makeText(DeliveryAddressActivity.this, 
-                            "Error fetching cities (Code: " + response.code() + ")", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<CityListResponse> call, Throwable t) {
-                Log.e(TAG, "✗ City API Failure: " + t.getMessage(), t);
-                Toast.makeText(DeliveryAddressActivity.this, 
-                        "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void updateStateSpinner() {
-        List<String> stateNames = new ArrayList<>();
-        stateNames.add("Select State");
-        for (StateListResponse.StateData state : stateList) {
-            stateNames.add(state.getCStateName());
-        }
-        
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_item, stateNames);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerState.setAdapter(adapter);
-        spinnerState.setEnabled(true);
-        Log.d(TAG, "State spinner updated with " + stateNames.size() + " items");
-        Toast.makeText(DeliveryAddressActivity.this, (stateNames.size() - 1) + " states loaded", Toast.LENGTH_SHORT).show();
-    }
-
-    private void updateCitySpinner() {
-        List<String> cityNames = new ArrayList<>();
-        cityNames.add("Select City");
-        for (CityListResponse.CityData city : cityList) {
-            cityNames.add(city.getCCityName());
-        }
-        
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_item, cityNames);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerCity.setAdapter(adapter);
-        spinnerCity.setEnabled(true);
-        Log.d(TAG, "City spinner updated with " + cityNames.size() + " items");
-        Toast.makeText(DeliveryAddressActivity.this, (cityNames.size() - 1) + " cities loaded", Toast.LENGTH_SHORT).show();
-    }
-
-    private void setupClickListeners() {
-        backArrow.setOnClickListener(v -> onBackPressed());
-        btnContinue.setOnClickListener(v -> validateAndContinue());
-
-        // "Use" button — fills address fields from current GPS location
-        btnUseLocation.setOnClickListener(v -> {
-            if (!resolvedAddress.isEmpty()) {
-                etAddressLine.setText(resolvedAddress);
-                Toast.makeText(this, "Location applied", Toast.LENGTH_SHORT).show();
-            } else {
-                requestLocationPermission();
-            }
-        });
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Google Map
-    // ─────────────────────────────────────────────────────────────────────────
+    // ================= MAP =================
 
     private void setupMap() {
-        SupportMapFragment mapFragment = (SupportMapFragment)
-                getSupportFragmentManager().findFragmentById(R.id.map_fragment);
-        if (mapFragment != null) {
-            mapFragment.getMapAsync(this);
-        }
+        SupportMapFragment mapFragment =
+                (SupportMapFragment) getSupportFragmentManager()
+                        .findFragmentById(R.id.map_fragment);
+
+        if (mapFragment != null) mapFragment.getMapAsync(this);
     }
 
     @Override
     public void onMapReady(@NonNull GoogleMap map) {
         googleMap = map;
-        googleMap.getUiSettings().setZoomControlsEnabled(true);
-        googleMap.getUiSettings().setMyLocationButtonEnabled(true);
 
-        // Move to default/current location
-        LatLng defaultLocation = new LatLng(currentLat, currentLng);
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 12f));
+        LatLng india = new LatLng(20.5937, 78.9629);
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(india, 5));
 
-        // Allow user to tap map to pick location
         googleMap.setOnMapClickListener(latLng -> {
-            currentLat = latLng.latitude;
-            currentLng = latLng.longitude;
+            lat = latLng.latitude;
+            lng = latLng.longitude;
+
             googleMap.clear();
-            googleMap.addMarker(new MarkerOptions().position(latLng).title("Selected Location"));
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f));
-            reverseGeocode(latLng.latitude, latLng.longitude);
+            googleMap.addMarker(new MarkerOptions().position(latLng));
+
+            reverseGeocode(lat, lng);
         });
-
-        // Enable my location layer if permission granted
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            googleMap.setMyLocationEnabled(true);
-        }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // GPS Location
-    // ─────────────────────────────────────────────────────────────────────────
+    // ================= LOCATION =================
 
-    private void requestLocationPermission() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
+    private void setupClick() {
+
+        btnUseLocation.setOnClickListener(v -> requestLocation());
+
+        btnContinue.setOnClickListener(v -> saveData());
+    }
+
+    private void requestLocation() {
+
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION},
-                    LOCATION_PERMISSION_REQUEST);
-        } else {
-            fetchCurrentLocation();
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    LOCATION_PERMISSION_REQ);
+            return;
         }
-    }
-
-    private void fetchCurrentLocation() {
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) return;
-
-        tvCurrentLocation.setText("Fetching location...");
 
         fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
+
             if (location != null) {
-                currentLat = location.getLatitude();
-                currentLng = location.getLongitude();
+                lat = location.getLatitude();
+                lng = location.getLongitude();
 
-                // Move map to current location
-                if (googleMap != null) {
-                    LatLng latLng = new LatLng(currentLat, currentLng);
-                    googleMap.clear();
-                    googleMap.addMarker(new MarkerOptions()
-                            .position(latLng).title("Your Location"));
-                    googleMap.animateCamera(
-                            CameraUpdateFactory.newLatLngZoom(latLng, 15f));
-                }
+                LatLng latLng = new LatLng(lat, lng);
 
-                reverseGeocode(currentLat, currentLng);
+                googleMap.clear();
+                googleMap.addMarker(new MarkerOptions().position(latLng));
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
 
-            } else {
-                tvCurrentLocation.setText("Unable to get location. Tap on map.");
+                reverseGeocode(lat, lng);
+
+                Toast.makeText(this, "Location Selected", Toast.LENGTH_SHORT).show();
             }
-        }).addOnFailureListener(e ->
-                tvCurrentLocation.setText("Location error: " + e.getMessage()));
+        });
     }
 
+    // ================= GEOCODER =================
+
     private void reverseGeocode(double lat, double lng) {
+
         new Thread(() -> {
             try {
                 Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-                List<Address> addresses = geocoder.getFromLocation(lat, lng, 1);
+                List<Address> list = geocoder.getFromLocation(lat, lng, 1);
 
-                if (addresses != null && !addresses.isEmpty()) {
-                    Address address = addresses.get(0);
+                if (list != null && !list.isEmpty()) {
 
-                    StringBuilder sb = new StringBuilder();
-                    for (int i = 0; i <= address.getMaxAddressLineIndex(); i++) {
-                        sb.append(address.getAddressLine(i));
-                        if (i < address.getMaxAddressLineIndex()) sb.append(", ");
-                    }
-                    resolvedAddress = sb.toString();
+                    Address a = list.get(0);
 
-                    String city    = address.getLocality();
-                    String state   = address.getAdminArea();
-                    String pinCode = address.getPostalCode();
+                    String address = a.getAddressLine(0);
+                    String city = a.getLocality();
+                    String state = a.getAdminArea();
+                    String pin = a.getPostalCode();
 
                     runOnUiThread(() -> {
-                        tvCurrentLocation.setText(resolvedAddress);
 
-                        // Auto-fill PIN code if found
-                        if (pinCode != null && !pinCode.isEmpty()) {
-                            etPinCode.setText(pinCode);
-                        }
+                        tvCurrentLocation.setText(address);
+                        etAddressLine.setText(address);
 
-                        // Auto-select city in spinner
-                        if (city != null) selectSpinnerItem(spinnerCity, city);
+                        if (pin != null) etPinCode.setText(pin);
 
-                        // Auto-select state in spinner
-                        if (state != null) selectSpinnerItem(spinnerState, state);
+                        setSpinnerByText(spinnerState, state);
+                        setSpinnerByText(spinnerCity, city);
                     });
-                } else {
-                    runOnUiThread(() ->
-                            tvCurrentLocation.setText("Lat: " + lat + ", Lng: " + lng));
                 }
+
             } catch (IOException e) {
-                runOnUiThread(() ->
-                        tvCurrentLocation.setText("Address lookup failed"));
+                e.printStackTrace();
             }
         }).start();
     }
 
-    private void selectSpinnerItem(Spinner spinner, String value) {
+    // ================= STATE API =================
+
+    private void fetchStateList() {
+
+        apiService.getStateList().enqueue(new Callback<StateListResponse>() {
+            @Override
+            public void onResponse(Call<StateListResponse> call, Response<StateListResponse> response) {
+
+                if (response.isSuccessful() && response.body() != null) {
+
+                    stateList = response.body().getJData();
+
+                    List<String> names = new ArrayList<>();
+                    names.add("Select State");
+
+                    for (StateListResponse.StateData s : stateList) {
+                        names.add(s.getCStateName());
+                    }
+
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                            DeliveryAddressActivity.this,
+                            android.R.layout.simple_spinner_item,
+                            names
+                    );
+
+                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                    spinnerState.setAdapter(adapter);
+
+                    spinnerState.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                        @Override
+                        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+                            if (position > 0) {
+                                selectedStateId = stateList.get(position - 1).getNId();
+                                fetchCityList(selectedStateId);
+                            }
+                        }
+
+                        @Override
+                        public void onNothingSelected(AdapterView<?> parent) {}
+                    });
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call<StateListResponse> call, Throwable t) {
+                Toast.makeText(DeliveryAddressActivity.this, "State API Failed", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // ================= CITY API =================
+
+    private void fetchCityList(String stateId) {
+
+        apiService.getCityList(new CityListRequest(stateId))
+                .enqueue(new Callback<CityListResponse>() {
+                    @Override
+                    public void onResponse(Call<CityListResponse> call, Response<CityListResponse> response) {
+
+                        if (response.isSuccessful() && response.body() != null) {
+
+                            cityList = response.body().getJData();
+
+                            List<String> names = new ArrayList<>();
+                            names.add("Select City");
+
+                            for (CityListResponse.CityData c : cityList) {
+                                names.add(c.getCCityName());
+                            }
+
+                            ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                                    DeliveryAddressActivity.this,
+                                    android.R.layout.simple_spinner_item,
+                                    names
+                            );
+
+                            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                            spinnerCity.setAdapter(adapter);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<CityListResponse> call, Throwable t) {
+                        Toast.makeText(DeliveryAddressActivity.this, "City API Failed", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    // ================= SAVE =================
+
+    private void saveData() {
+
+        String address = etAddressLine.getText().toString();
+        String pin = etPinCode.getText().toString();
+
+        if (lat == 0.0 || lng == 0.0) {
+            Toast.makeText(this, "Select Location", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Toast.makeText(this,
+                "Lat: " + lat + "\nLng: " + lng,
+                Toast.LENGTH_LONG).show();
+
+        // 👉 இங்க API call போடு (register insert)
+    }
+
+    // ================= HELPERS =================
+
+    private void setSpinnerByText(Spinner spinner, String text) {
+
+        if (text == null) return;
+
         ArrayAdapter adapter = (ArrayAdapter) spinner.getAdapter();
         if (adapter == null) return;
+
         for (int i = 0; i < adapter.getCount(); i++) {
-            if (adapter.getItem(i).toString()
-                    .equalsIgnoreCase(value)) {
+            if (adapter.getItem(i).toString().equalsIgnoreCase(text)) {
                 spinner.setSelection(i);
                 break;
             }
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == LOCATION_PERMISSION_REQUEST) {
-            if (grantResults.length > 0
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                fetchCurrentLocation();
-                if (googleMap != null) {
-                    if (ActivityCompat.checkSelfPermission(this,
-                            Manifest.permission.ACCESS_FINE_LOCATION)
-                            == PackageManager.PERMISSION_GRANTED) {
-                        googleMap.setMyLocationEnabled(true);
-                    }
-                }
-            } else {
-                Toast.makeText(this,
-                        "Location permission denied. Please enable it in Settings.",
-                        Toast.LENGTH_LONG).show();
-                tvCurrentLocation.setText("Location permission denied");
-            }
-        }
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Validation
-    // ─────────────────────────────────────────────────────────────────────────
-
-    private void validateAndContinue() {
-        String addressLine = etAddressLine.getText().toString().trim();
-        String pinCode     = etPinCode.getText().toString().trim();
-        String city        = spinnerCity.getSelectedItem() != null
-                ? spinnerCity.getSelectedItem().toString() : "";
-        String state       = spinnerState.getSelectedItem() != null
-                ? spinnerState.getSelectedItem().toString() : "";
-
-        if (addressLine.isEmpty()) {
-            etAddressLine.setError("Please enter address line");
-            etAddressLine.requestFocus();
-            return;
-        }
-
-        if (pinCode.isEmpty() || pinCode.length() < 6) {
-            etPinCode.setError("Enter valid 6-digit PIN code");
-            etPinCode.requestFocus();
-            return;
-        }
-
-        if (city.equals("Select City") || city.isEmpty()) {
-            Toast.makeText(this, "Please select city", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (state.equals("Select State") || state.isEmpty()) {
-            Toast.makeText(this, "Please select state", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Toast.makeText(this, "Account setup completed!", Toast.LENGTH_SHORT).show();
-
-        Intent i = new Intent(DeliveryAddressActivity.this, MainActivity.class);
-        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(i);
-        finish();
+    private void setupLoader() {
+        dialog = new ProgressDialog(this);
+        dialog.setMessage("Loading...");
     }
 }

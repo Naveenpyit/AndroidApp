@@ -12,8 +12,12 @@ import android.widget.ImageView;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.myapplication.activity.BusinessDetailsActivity;
+import com.example.myapplication.activity.LoginPage;
 import com.example.myapplication.activity.MainActivity;
 import com.example.myapplication.activity.OnboadingScreen;
+import com.example.myapplication.activity.OwnerDetailsActivity;
+import com.example.myapplication.activity.SetupStepsActivity;
 
 public class SplashScreen extends AppCompatActivity {
 
@@ -32,15 +36,48 @@ public class SplashScreen extends AppCompatActivity {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
 
             SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
-            boolean isFirstTime = prefs.getBoolean("is_first_time", true);
 
+            boolean isFirstTime = prefs.getBoolean("is_first_time", true);
+            boolean isLoggedIn = prefs.getBoolean("is_logged_in", false);
+            String lastScreen = prefs.getString("last_screen", "");
+
+            // 🔥 FLOW CONTROL
             if (isFirstTime) {
-                startActivity(new Intent(this, OnboadingScreen.class));
+
+                startActivity(new Intent(SplashScreen.this, OnboadingScreen.class));
+
+            } else if (!isLoggedIn) {
+
+                startActivity(new Intent(SplashScreen.this, LoginPage.class));
+
             } else {
-                startActivity(new Intent(this, MainActivity.class));
+
+                // Resume last screen
+                switch (lastScreen) {
+
+                    case "OwnerDetails":
+                        startActivity(new Intent(SplashScreen.this, OwnerDetailsActivity.class));
+                        break;
+
+                    case "BusinessDetails":
+                        startActivity(new Intent(SplashScreen.this, BusinessDetailsActivity.class));
+                        break;
+
+                    case "SetupSteps":
+                        startActivity(new Intent(SplashScreen.this, SetupStepsActivity.class));
+                        break;
+
+                    case "Main":
+                        startActivity(new Intent(SplashScreen.this, MainActivity.class));
+                        break;
+
+                    default:
+                        startActivity(new Intent(SplashScreen.this, MainActivity.class));
+                        break;
+                }
             }
 
-            finish(); // prevent going back to splash
+            finish(); // only once!
 
         }, 2000);
     }
