@@ -47,7 +47,7 @@ public class Otp_Screen extends AppCompatActivity {
         apiService    = RetrofitClient.getClient(this);
         tokenManager  = new TokenManager(this);
 
-        // ── Get mobile passed from LoginPage ──────────────────────────────────
+
         mobile = getIntent().getStringExtra("mobile");
         if (mobile == null) mobile = "";
 
@@ -70,7 +70,6 @@ public class Otp_Screen extends AppCompatActivity {
         });
     }
 
-    // ── Verify OTP API ────────────────────────────────────────────────────────
 
     private void verifyOtp(String mobile, String otp) {
 

@@ -23,7 +23,6 @@ import com.example.myapplication.model.CommonResponse;
 import com.example.myapplication.model.ProductModel;
 import com.example.myapplication.network.ApiService;
 import com.example.myapplication.network.RetrofitClient;
-import com.example.myapplication.utils.TokenManager;
 
 import java.util.ArrayList;
 
@@ -37,10 +36,13 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private static final int TYPE_LOADING = 1;
     private static final String TAG = "ProductAdapter";
 
+
+    private static final String USER_ID = "10";
+
     private final Context context;
     private final ArrayList<ProductModel> list;
     private boolean isLoadingVisible = false;
-    private ApiService apiService;
+    private final ApiService apiService;
 
     public ProductListingAdapter(Context context, ArrayList<ProductModel> list) {
         this.context = context;
@@ -71,13 +73,12 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-
         if (getItemViewType(position) == TYPE_LOADING) return;
 
         ProductModel p = list.get(position);
         ProductViewHolder h = (ProductViewHolder) holder;
 
-        // ── Bind Data ──
+
         h.tvName.setText(p.getName());
         h.tvSubtitle.setText(p.getCategoryName());
         h.tvPrice.setText("₹" + p.getSellingPrice());
@@ -93,28 +94,33 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 .placeholder(R.drawable.ic_launcher_background)
                 .into(h.ivImage);
 
-        // ── Initial State: Only "Add to Cart" button visible ──
-        h.btnAddToCart.setVisibility(View.VISIBLE);
-        h.layoutQty.setVisibility(View.GONE);
-        h.tvQtyCount.setText("1");
+        int qty = safeInt(p.getCartQty());
+        if (qty > 0) {
+            h.btnAddToCart.setVisibility(View.GONE);
+            h.layoutQty.setVisibility(View.VISIBLE);
+            h.tvQtyCount.setText(String.valueOf(qty));
+        } else {
+            h.btnAddToCart.setVisibility(View.VISIBLE);
+            h.layoutQty.setVisibility(View.GONE);
+            h.tvQtyCount.setText("1");
+        }
 
-        // ── ADD TO CART Button Click ──
         h.btnAddToCart.setOnClickListener(v -> {
             int pos = h.getAdapterPosition();
             if (pos == RecyclerView.NO_POSITION) return;
 
             ProductModel item = list.get(pos);
 
-            // Hide "Add to Cart", Show Qty Selector
+
+            item.setCartQty("1");
             h.btnAddToCart.setVisibility(View.GONE);
             h.layoutQty.setVisibility(View.VISIBLE);
             h.tvQtyCount.setText("1");
 
-            // Send API with qty = 1
-            addToCartAPI(item, 1, h);
+            callAddCartApi(item, 1);
         });
 
-        // ── PLUS Button ──
+
         h.btnPlus.setOnClickListener(v -> {
             int pos = h.getAdapterPosition();
             if (pos == RecyclerView.NO_POSITION) return;
@@ -123,14 +129,13 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             int currentQty = safeInt(h.tvQtyCount.getText().toString());
             int newQty = currentQty + 1;
 
-            h.tvQtyCount.setText(String.valueOf(newQty));
             item.setCartQty(String.valueOf(newQty));
+            h.tvQtyCount.setText(String.valueOf(newQty));
 
-            // Send API with new qty
-            addToCartAPI(item, newQty, h);
+            callAddCartApi(item, newQty);
         });
 
-        // ── MINUS Button ──
+
         h.btnMinus.setOnClickListener(v -> {
             int pos = h.getAdapterPosition();
             if (pos == RecyclerView.NO_POSITION) return;
@@ -140,105 +145,83 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
             if (currentQty > 1) {
                 int newQty = currentQty - 1;
-                h.tvQtyCount.setText(String.valueOf(newQty));
-                item.setCartQty(String.valueOf(newQty));
 
-                // Send API with new qty
-                addToCartAPI(item, newQty, h);
-            } else if (currentQty == 1) {
-                // Remove from cart
+                // Optimistic UI update
+                item.setCartQty(String.valueOf(newQty));
+                h.tvQtyCount.setText(String.valueOf(newQty));
+
+                callAddCartApi(item, newQty);
+
+            } else {
+                // qty == 1 → remove from cart (send qty = 0)
+                item.setCartQty("0");
                 h.layoutQty.setVisibility(View.GONE);
                 h.btnAddToCart.setVisibility(View.VISIBLE);
-                item.setCartQty("0");
 
-                // Send API with qty = 0 to remove
-                addToCartAPI(item, 0, h);
+                callAddCartApi(item, 0);
             }
         });
     }
 
-    private void addToCartAPI(ProductModel item, int quantity, ProductViewHolder holder) {
-        // ── DEBUG: Log Request Data ──
-        Log.d(TAG, "=== ADD TO CART REQUEST ===");
-        Log.d(TAG, "Product: " + item.getName());
-        Log.d(TAG, "Category: " + item.getCategory());
-        Log.d(TAG, "Pack ID: " + item.getPackId());
-        Log.d(TAG, "Item ID: " + item.getItemId());
-        Log.d(TAG, "Quantity: " + quantity);
-        Log.d(TAG, "User: 10");
-        // Prepare request
+    /**
+     * Calls POST add-cart with the correct field order:
+     *   {"n_category":"1","n_pack":"2","n_product":"1","n_qty":"1","n_user":"10"}
+     */
+    private void callAddCartApi(ProductModel item, int quantity) {
+
+        // ── Build request — field order MUST match AddCartRequest constructor ──
         AddCartRequest request = new AddCartRequest(
-                item.getCategory(),           // n_category
-                item.getPackId(),             // n_pack
-                item.getItemId(),             // n_product
-                String.valueOf(quantity),
-                "10"// n_qty
-               // userId                    // n_user
+                item.getCategory(),        // n_category
+                item.getPackId(),          // n_pack
+                item.getItemId(),          // n_product
+                String.valueOf(quantity),  // n_qty
+                USER_ID                    // n_user
         );
 
-        Log.d(TAG, "Request: " + request.toString());
+        Log.d(TAG, "ADD-CART → category=" + item.getCategory()
+                + " pack=" + item.getPackId()
+                + " product=" + item.getItemId()
+                + " qty=" + quantity
+                + " user=" + USER_ID);
 
         apiService.addCart(request).enqueue(new Callback<CommonResponse>() {
             @Override
             public void onResponse(Call<CommonResponse> call, Response<CommonResponse> response) {
-                Log.d(TAG, "=== API RESPONSE ===");
-                Log.d(TAG, "Status Code: " + response.code());
-                Log.d(TAG, "Is Successful: " + response.isSuccessful());
-
-                if (response.isSuccessful()) {
+                if (response.isSuccessful() && response.body() != null) {
                     CommonResponse body = response.body();
-                    Log.d(TAG, "Response Body: " + (body != null ? body.toString() : "NULL"));
+                    Log.d(TAG, "add-cart response status=" + body.getStatus()
+                            + " msg=" + body.getMessage());
 
-                    if (body != null) {
-                        Log.d(TAG, "Status: " + body.getStatus());
-                        Log.d(TAG, "Message: " + body.getMessage());
-
-                        if (body.getStatus() == 1) {
-                            Log.d(TAG, "✅ SUCCESS - Item added to cart");
-                            item.setCartQty(String.valueOf(quantity));
-
-                            if (quantity > 0) {
-                                Toast.makeText(context, quantity + " added to cart ✓", Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(context, "Removed from cart ✓", Toast.LENGTH_SHORT).show();
-                            }
+                    if (body.getStatus() == 1) {
+                        if (quantity > 0) {
+                            Toast.makeText(context,
+                                    quantity + " added to cart ✓", Toast.LENGTH_SHORT).show();
                         } else {
-                            Log.e(TAG, "❌ API Error - Status: " + body.getStatus());
-                            Toast.makeText(context, "Error: " + body.getMessage(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context,
+                                    "Removed from cart ✓", Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Log.e(TAG, "❌ Response body is NULL");
-                        Toast.makeText(context, "Invalid response", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context,
+                                "Error: " + body.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Log.e(TAG, "❌ Request Failed - Code: " + response.code());
-                    try {
-                        String errorBody = response.errorBody() != null ? response.errorBody().string() : "No error details";
-                        Log.e(TAG, "Error Body: " + errorBody);
-                        Toast.makeText(context, "Failed: Code " + response.code(), Toast.LENGTH_SHORT).show();
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error reading error body", e);
-                    }
+                    Log.e(TAG, "add-cart failed, code=" + response.code());
+                    Toast.makeText(context,
+                            "Failed (code " + response.code() + ")", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<CommonResponse> call, Throwable t) {
-                Log.e(TAG, "❌ Network Error", t);
-                Log.e(TAG, "Error Message: " + t.getMessage());
-                Log.e(TAG, "Error Type: " + t.getClass().getSimpleName());
-
-                Toast.makeText(context, "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "add-cart network error: " + t.getMessage());
+                Toast.makeText(context,
+                        "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private int safeInt(String v) {
-        try {
-            return Integer.parseInt(v);
-        } catch (Exception e) {
-            return 1;
-        }
+        try { return Integer.parseInt(v); } catch (Exception e) { return 0; }
     }
 
     public void showLoading() {
@@ -255,7 +238,6 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         }
     }
 
-    // ── ViewHolders ──
 
     static class ProductViewHolder extends RecyclerView.ViewHolder {
         ImageView ivImage;
@@ -265,32 +247,28 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         LinearLayout layoutQty;
         TextView btnMinus, btnPlus;
 
-        public ProductViewHolder(@NonNull View v) {
+        ProductViewHolder(@NonNull View v) {
             super(v);
-
-            ivImage = v.findViewById(R.id.iv_product_image);
-            tvName = v.findViewById(R.id.tv_product_name);
-            tvSubtitle = v.findViewById(R.id.tv_product_subtitle);
-            tvPrice = v.findViewById(R.id.tv_selling_price);
-            tvMrp = v.findViewById(R.id.tv_mrp);
-            tvDiscount = v.findViewById(R.id.tv_discount);
-            tvMoq = v.findViewById(R.id.tv_moq);
-            tvBuyPrice = v.findViewById(R.id.tv_buy_price);
-            tvMargin = v.findViewById(R.id.tv_margin);
-
-            btnAddToCart = v.findViewById(R.id.btn_add_to_cart);
-
-            layoutQty = v.findViewById(R.id.layout_qty);
-            btnMinus = v.findViewById(R.id.btn_minus);
-            btnPlus = v.findViewById(R.id.btn_plus);
-            tvQtyCount = v.findViewById(R.id.tv_qty_count);
+            ivImage       = v.findViewById(R.id.iv_product_image);
+            tvName        = v.findViewById(R.id.tv_product_name);
+            tvSubtitle    = v.findViewById(R.id.tv_product_subtitle);
+            tvPrice       = v.findViewById(R.id.tv_selling_price);
+            tvMrp         = v.findViewById(R.id.tv_mrp);
+            tvDiscount    = v.findViewById(R.id.tv_discount);
+            tvMoq         = v.findViewById(R.id.tv_moq);
+            tvBuyPrice    = v.findViewById(R.id.tv_buy_price);
+            tvMargin      = v.findViewById(R.id.tv_margin);
+            btnAddToCart  = v.findViewById(R.id.btn_add_to_cart);
+            layoutQty     = v.findViewById(R.id.layout_qty);
+            btnMinus      = v.findViewById(R.id.btn_minus);
+            btnPlus       = v.findViewById(R.id.btn_plus);
+            tvQtyCount    = v.findViewById(R.id.tv_qty_count);
         }
     }
 
     static class LoadingViewHolder extends RecyclerView.ViewHolder {
         ProgressBar progressBar;
-
-        public LoadingViewHolder(@NonNull View v) {
+        LoadingViewHolder(@NonNull View v) {
             super(v);
             progressBar = v.findViewById(R.id.progress_bar);
         }
