@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 public class ListWishlistResponse {
+
     @SerializedName("n_status")
     private int nStatus;
 
@@ -13,11 +14,12 @@ public class ListWishlistResponse {
     @SerializedName("j_data")
     private List<WishlistItem> jData;
 
-    public int getNStatus() { return nStatus; }
-    public String getCMessage() { return cMessage; }
+    public int getNStatus()            { return nStatus; }
+    public String getCMessage()        { return cMessage; }
     public List<WishlistItem> getJData() { return jData; }
 
     public static class WishlistItem {
+
         @SerializedName("n_id")
         private String nId;
 
@@ -63,21 +65,26 @@ public class ListWishlistResponse {
         @SerializedName("n_gst_value")
         private String nGstValue;
 
-        // Getters
-        public String getNId() { return nId; }
-        public String getNCustomer() { return nCustomer; }
-        public String getNCategory() { return nCategory; }
-        public String getNProduct() { return nProduct; }
-        public String getNStatus() { return nStatus; }
-        public String getDCreated() { return dCreated; }
-        public String getNGst() { return nGst; }
-        public String getCPackName() { return cPackName; }
-        public String getNMrp() { return nMrp; }
-        public String getNSellingPrice() { return nSellingPrice; }
-        public String getCategoryName() { return categoryName; }
-        public String getCItemCode() { return cItemCode; }
-        public String getCFabric() { return cFabric; }
-        public String getCImage() { return cImage; }
-        public String getNGstValue() { return nGstValue; }
+        // ✅ NOT from server — injected locally from WishlistManager storage
+        private String nPack;
+
+        public void setNPack(String nPack) { this.nPack = nPack; }
+        public String getNPack()           { return nPack; }
+
+        public String getNId()            { return nId; }
+        public String getNCustomer()      { return nCustomer; }
+        public String getNCategory()      { return nCategory; }
+        public String getNProduct()       { return nProduct; }
+        public String getNStatus()        { return nStatus; }
+        public String getDCreated()       { return dCreated; }
+        public String getNGst()           { return nGst; }
+        public String getCPackName()      { return cPackName; }
+        public String getNMrp()           { return nMrp; }
+        public String getNSellingPrice()  { return nSellingPrice; }
+        public String getCategoryName()   { return categoryName; }
+        public String getCItemCode()      { return cItemCode; }
+        public String getCFabric()        { return cFabric; }
+        public String getCImage()         { return cImage; }
+        public String getNGstValue()      { return nGstValue; }
     }
 }

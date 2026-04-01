@@ -1,9 +1,12 @@
 package com.example.myapplication.activity;
 
+import static android.content.Intent.getIntent;
+
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -27,6 +30,8 @@ import retrofit2.Response;
 
 public class Otp_Screen extends AppCompatActivity {
 
+    private static final String TAG = "Otp_Screen";
+
     private MaterialButton btn_submit;
     private PinView pinview;
     private ProgressDialog progressDialog;
@@ -37,6 +42,7 @@ public class Otp_Screen extends AppCompatActivity {
     private String mobile;
 
     @Override
+
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.otp_screen);
@@ -62,6 +68,7 @@ public class Otp_Screen extends AppCompatActivity {
             if (otp.length() != 6) {
                 Toast.makeText(this, "Enter a valid 6-digit OTP",
                         Toast.LENGTH_SHORT).show();
+
                 return;
             }
 
@@ -82,7 +89,11 @@ public class Otp_Screen extends AppCompatActivity {
                                    Response<VerifyOtpResponse> response) {
                 hideLoader();
 
+                Log.d(TAG, "OTP Verify Response received. Successful: " + response.isSuccessful());
+
                 if (response.isSuccessful() && response.body() != null) {
+
+                    Log.d(TAG, "OTP Verify Response Body: Status=" + response.body().getNStatus() + ", Message=" + response.body().getCMessage() + ", Data=" + response.body().getJData());
 
                     if (response.body().getNStatus() == 1) {
 
@@ -140,6 +151,7 @@ public class Otp_Screen extends AppCompatActivity {
             @Override
             public void onFailure(Call<VerifyOtpResponse> call, Throwable t) {
                 hideLoader();
+                Log.e(TAG, "OTP Verify Failure: " + t.getMessage());
                 Toast.makeText(Otp_Screen.this,
                         "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }

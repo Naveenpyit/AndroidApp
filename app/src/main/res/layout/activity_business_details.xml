@@ -1,26 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:background="@android:color/white">
 
-    <include layout="@layout/toolbar_red_header" />
+    <!-- ── Red Toolbar ── -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@color/red_primary"
+        android:paddingStart="12dp"
+        android:paddingEnd="16dp">
 
+        <ImageView
+            android:id="@+id/toolbarBack"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/ic_arrow_back"
+            android:tint="@android:color/white"
+            android:padding="6dp"
+            android:layout_centerVertical="true"
+            android:layout_alignParentStart="true"
+            tools:ignore="UseAppTint" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Business Details"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="48dp" />
+
+    </RelativeLayout>
+
+    <!-- ── Scrollable Content ── -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="30dp">
+            android:padding="20dp">
 
-            <!-- Select Business Type -->
+            <!-- ── Select Business Type ── -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -36,14 +67,13 @@
                 android:orientation="vertical"
                 android:background="@drawable/bg_radio_card"
                 android:padding="10dp"
-                android:layout_marginBottom="10dp">
+                android:layout_marginBottom="20dp">
 
                 <!-- Retailer -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingVertical="0dp">
+                    android:orientation="vertical">
 
                     <RadioButton
                         android:id="@+id/rbRetailer"
@@ -61,7 +91,7 @@
                         android:textColor="#999999"
                         android:textSize="11sp"
                         android:layout_marginStart="32dp"
-                        android:layout_marginTop="4dp" />
+                        android:layout_marginTop="2dp" />
                 </LinearLayout>
 
                 <View
@@ -74,8 +104,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingVertical="0dp">
+                    android:orientation="vertical">
 
                     <RadioButton
                         android:id="@+id/rbWholesaler"
@@ -93,7 +122,7 @@
                         android:textColor="#999999"
                         android:textSize="11sp"
                         android:layout_marginStart="32dp"
-                        android:layout_marginTop="4dp" />
+                        android:layout_marginTop="2dp" />
                 </LinearLayout>
 
                 <View
@@ -106,8 +135,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingVertical="0dp">
+                    android:orientation="vertical">
 
                     <RadioButton
                         android:id="@+id/rbDistributor"
@@ -125,21 +153,21 @@
                         android:textColor="#999999"
                         android:textSize="11sp"
                         android:layout_marginStart="32dp"
-                        android:layout_marginTop="4dp" />
+                        android:layout_marginTop="2dp" />
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Please Provide Any One -->
+            <!-- ── GST / PAN Section ── -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Please provide any one"
+                android:text="Please provide any one *"
                 android:textColor="#1A1A1A"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="12dp" />
 
-            <!-- Radio Group for PAN/GST -->
+            <!-- PAN / GST Radio Toggle -->
             <RadioGroup
                 android:id="@+id/rgIdentity"
                 android:layout_width="match_parent"
@@ -168,7 +196,7 @@
                     android:checked="true" />
             </RadioGroup>
 
-            <!-- GST Number Input -->
+            <!-- GST / PAN Input -->
             <EditText
                 android:id="@+id/etGSTNumber"
                 android:layout_width="match_parent"
@@ -179,26 +207,62 @@
                 android:textColor="#1A1A1A"
                 android:textColorHint="#999999"
                 android:textSize="14sp"
-                android:layout_marginBottom="20dp" />
+                android:inputType="textCapCharacters"
+                android:layout_marginBottom="24dp" />
 
-            <!-- Upload Shop Image -->
-            <TextView
+            <!-- ── Upload Shop Image ── -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Upload a shop image"
-                android:textColor="#1A1A1A"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="12dp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="10dp">
 
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Upload a shop image *"
+                    android:textColor="#1A1A1A"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <!-- Mandatory badge -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Required"
+                    android:textColor="#E63946"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_required_badge"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="3dp" />
+            </LinearLayout>
+
+            <!-- Upload Box -->
             <FrameLayout
                 android:id="@+id/flUploadImage"
                 android:layout_width="match_parent"
-                android:layout_height="120dp"
+                android:layout_height="140dp"
                 android:background="@drawable/bg_upload_dashed"
-                android:layout_marginBottom="20dp">
+                android:layout_marginBottom="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
 
+                <!-- Preview image — hidden until photo is selected -->
+                <ImageView
+                    android:id="@+id/iv_shop_preview"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone"
+                    android:contentDescription="Shop Image Preview" />
+
+                <!-- Placeholder content — shown by default -->
                 <LinearLayout
+                    android:id="@+id/ll_upload_placeholder"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
@@ -206,35 +270,89 @@
                     android:layout_gravity="center">
 
                     <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
+                        android:id="@+id/iv_upload_icon"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
                         android:src="@drawable/ic_upload"
-                        android:tint="#999999"
+                        android:tint="#BBBBBB"
                         android:contentDescription="Upload"
                         tools:ignore="UseAppTint" />
 
                     <TextView
+                        android:id="@+id/tv_upload_label"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Upload Image"
-                        android:textColor="#999999"
+                        android:text="Tap to upload shop image"
+                        android:textColor="#BBBBBB"
                         android:textSize="12sp"
                         android:layout_marginTop="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Camera or Gallery"
+                        android:textColor="#E63946"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="2dp" />
                 </LinearLayout>
+
+                <!-- Edit / change icon overlay — shown after image is picked -->
+                <LinearLayout
+                    android:id="@+id/ll_edit_overlay"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|end"
+                    android:background="#CC000000"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="6dp"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_edit"
+                        android:tint="@android:color/white"
+                        tools:ignore="UseAppTint"
+                        android:contentDescription="Change" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="  Change"
+                        android:textColor="@android:color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
             </FrameLayout>
+
+            <!-- Error hint — hidden until validation fails -->
+            <TextView
+                android:id="@+id/tv_image_error"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⚠ Please upload a shop image to continue"
+                android:textColor="#E63946"
+                android:textSize="11sp"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
 
         </LinearLayout>
     </ScrollView>
+
+    <!-- ── Save and Continue Button ── -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSaveContinue"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="20dp"
-        app:cornerRadius="8dp"
+        android:layout_height="52dp"
+        android:layout_margin="16dp"
         android:text="Save and Continue"
-        android:textSize="16sp"
-        android:textColor="@color/white"
-        android:backgroundTint="@color/appcolor"
-        android:fontFamily="@font/outfitmedium" />
+        android:textSize="15sp"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
+        android:textAllCaps="false"
+        app:cornerRadius="8dp"
+        app:backgroundTint="@color/red_primary" />
 
 </LinearLayout>

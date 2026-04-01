@@ -1,8 +1,11 @@
 package com.example.myapplication.network;
 
+
 import com.example.myapplication.model.AddCartRequest;
 import com.example.myapplication.model.AddWishlistRequest;
 import com.example.myapplication.model.AddWishlistResponse;
+import com.example.myapplication.model.CityListRequest;
+import com.example.myapplication.model.CityListResponse;
 import com.example.myapplication.model.CommonResponse;
 import com.example.myapplication.model.DeleteCartRequest;
 import com.example.myapplication.model.DeleteWishlistRequest;
@@ -24,12 +27,14 @@ import com.example.myapplication.model.RefreshTokenRequest;
 import com.example.myapplication.model.RefreshTokenResponse;
 import com.example.myapplication.model.SendOtpRequest;
 import com.example.myapplication.model.SendOtpResponse;
+import com.example.myapplication.model.StateListResponse;
 import com.example.myapplication.model.UpdateCartRequest;
 import com.example.myapplication.model.VerifyOtpRequest;
 import com.example.myapplication.model.VerifyOtpResponse;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.GET;
 import retrofit2.http.POST;
 
 public interface ApiService {
@@ -80,5 +85,11 @@ public interface ApiService {
 
     @POST("delete-wishlist")
     Call<CommonResponse> deleteWishlist(@Body DeleteWishlistRequest request);
+
+    @GET("state-list")
+    Call<StateListResponse> getStateList();
+
+    @POST("city-list")
+    Call<CityListResponse> getCityList(@Body CityListRequest request);
 }
 

@@ -123,7 +123,7 @@ public class ProductModel {
     // ── Setters ───────────────────────────────────────────────────────────────
 
     public void setWishlisted(boolean wishlisted) { this.wishlisted = wishlisted; }
-    public void setWishlistId(String wishlistId) { this.wishlistId = wishlistId; }  // ✅ ADD THIS
+    public void setWishlistId(String wishlistId) { this.wishlistId = wishlistId; }
     public void setName(String name) { this.name = name; }
     public void setSellingPrice(String sellingPrice) { this.sellingPrice = sellingPrice; }
     public void setMrp(String mrp) { this.mrp = mrp; }

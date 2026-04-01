@@ -40,12 +40,11 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     private static final int    TYPE_PRODUCT = 0;
     private static final int    TYPE_LOADING = 1;
-    private static final String TAG          = "CartDebug";
+    private static final String TAG          = "WishlistDebug";
 
-    // ── Callback interface so the Activity can update its badge TextViews ──
     public interface BadgeListener {
-        void onWishlistCountChanged(int delta);   // +1 added, -1 removed
-        void onCartCountChanged(int delta);        // +qty added, -qty removed
+        void onWishlistCountChanged(int delta);
+        void onCartCountChanged(int delta);
     }
 
     private final Context                 context;
@@ -53,21 +52,20 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private       boolean                 isLoadingVisible = false;
     private final ApiService              apiService;
     private final WishlistManager         wishlistManager;
-    private       BadgeListener           badgeListener;   // ← NEW
+    private       BadgeListener           badgeListener;
 
     public ProductListingAdapter(Context context, ArrayList<ProductModel> list) {
-        this.context         = context;
-        this.list            = list;
-        this.apiService      = RetrofitClient.getClient(context);
+        this.context        = context;
+        this.list           = list;
+        this.apiService     = RetrofitClient.getClient(context);
         this.wishlistManager = WishlistManager.getInstance(context);
     }
 
-    /** Call this from the Activity after creating the adapter. */
     public void setBadgeListener(BadgeListener listener) {
         this.badgeListener = listener;
     }
 
-    // ── Loading footer helpers ────────────────────────────────────────────────
+    // ── Loading footer ────────────────────────────────────────────────────────
 
     public void showLoading() {
         if (!isLoadingVisible) { isLoadingVisible = true;  notifyItemInserted(getItemCount()); }
@@ -94,9 +92,10 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (getItemViewType(position) == TYPE_LOADING) return;
 
-        ProductModel p  = list.get(position);
+        ProductModel    p = list.get(position);
         ProductViewHolder h = (ProductViewHolder) holder;
 
+        // ── Bind text fields ──────────────────────────────────────────────────
         h.tvName.setText(p.getName()         != null ? p.getName()         : "");
         h.tvSubtitle.setText(p.getCategoryName() != null ? p.getCategoryName() : "");
         h.tvPrice.setText("₹" + (p.getSellingPrice() != null ? p.getSellingPrice() : "0"));
@@ -107,6 +106,7 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         h.tvBuyPrice.setText("Buy for ₹" + (p.getSellingPrice() != null ? p.getSellingPrice() : "0"));
         h.tvMargin.setText((p.getDiscount() != null ? p.getDiscount() : "0") + "% Margin");
 
+        // ── Image ─────────────────────────────────────────────────────────────
         Glide.with(context)
                 .load(p.getImageUrl())
                 .placeholder(R.drawable.ic_launcher_background)
@@ -114,14 +114,13 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 .centerCrop()
                 .into(h.ivImage);
 
-        // Sync wishlist state from persistent manager
-        boolean isWishlisted    = wishlistManager.isWishlisted(p.getItemId());
-        String  storedWishlistId = wishlistManager.getWishlistId(p.getItemId());
+        // ── Wishlist state ────────────────────────────────────────────────────
+        boolean isWishlisted = wishlistManager.isWishlisted(p.getItemId());
         p.setWishlisted(isWishlisted);
-        p.setWishlistId(storedWishlistId);
+        p.setWishlistId(wishlistManager.getWishlistId(p.getItemId()));
         updateWishlistIcon(h, isWishlisted);
 
-        // Restore cart state
+        // ── Cart state ────────────────────────────────────────────────────────
         String  savedQty = p.getCartQty();
         boolean inCart   = !isEmpty(savedQty) && !savedQty.equals("0");
         if (inCart) {
@@ -134,7 +133,7 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             h.tvQtyCount.setText("1");
         }
 
-        // ── Add to cart ──────────────────────────────────────────────────────
+        // ── Cart listeners ────────────────────────────────────────────────────
         h.btnAddToCart.setOnClickListener(v -> {
             int pos = h.getAdapterPosition();
             if (pos == RecyclerView.NO_POSITION) return;
@@ -142,7 +141,7 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             h.btnAddToCart.setVisibility(View.GONE);
             h.layoutQty.setVisibility(View.VISIBLE);
             h.tvQtyCount.setText("1");
-            callAddCartApi(item, 1, h, 0);   // delta = 0 first; API callback fires it
+            callAddCartApi(item, 1, h, 0);
         });
 
         h.btnPlus.setOnClickListener(v -> {
@@ -151,7 +150,7 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             ProductModel item = list.get(pos);
             int newQty = safeInt(h.tvQtyCount.getText().toString()) + 1;
             h.tvQtyCount.setText(String.valueOf(newQty));
-            callAddCartApi(item, newQty, h, +1);   // added 1 unit
+            callAddCartApi(item, newQty, h, +1);
         });
 
         h.btnMinus.setOnClickListener(v -> {
@@ -162,88 +161,165 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             if (current > 1) {
                 int newQty = current - 1;
                 h.tvQtyCount.setText(String.valueOf(newQty));
-                callAddCartApi(item, newQty, h, -1);   // removed 1 unit
+                callAddCartApi(item, newQty, h, -1);
             } else {
                 h.layoutQty.setVisibility(View.GONE);
                 h.btnAddToCart.setVisibility(View.VISIBLE);
                 item.setCartQty("0");
-                callAddCartApi(item, 0, h, -1);   // removed last unit
+                callAddCartApi(item, 0, h, -1);
             }
         });
 
+        // ── Item click ────────────────────────────────────────────────────────
         h.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, ProductDetailScreen.class);
             intent.putExtra("c_random", p.getRandom());
             context.startActivity(intent);
         });
 
-        // ── Wishlist toggle ──────────────────────────────────────────────────
+        // ── Wishlist toggle ───────────────────────────────────────────────────
         h.ivWishlist.setOnClickListener(v -> {
             int pos = h.getAdapterPosition();
             if (pos == RecyclerView.NO_POSITION) return;
             ProductModel item = list.get(pos);
 
-            String category = item.getCategory();
-            String product  = item.getItemId();
-            String pack     = item.getPackId();
-            String userId   = "10";
+            // ✅ Use ACTUAL product fields — NOT hardcoded values
+            String category = item.getCategory();   // n_category from API e.g. "1"
+            String product  = item.getItemId();      // id from API e.g. "6"
+            String pack     = item.getPackId();      // n_pack_id from API e.g. "5"
+            String userId   = "10";                  // TODO: replace with TokenManager.getUserId()
+
+            Log.d(TAG, "Wishlist click → category=" + category
+                    + " product=" + product + " pack=" + pack);
 
             if (isEmpty(category) || isEmpty(product) || isEmpty(pack)) {
                 Toast.makeText(context, "Missing product info", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "MISSING: category=" + category
+                        + " product=" + product + " pack=" + pack);
                 return;
             }
 
             if (wishlistManager.isWishlisted(product)) {
                 removeFromWishlist(item, h);
             } else {
+                // ✅ Pass actual values — category, product, pack, userId
                 addToWishlist(category, product, pack, userId, item, h);
             }
         });
     }
 
-    // ── Wishlist helpers ─────────────────────────────────────────────────────
-
-    private void updateWishlistIcon(ProductViewHolder h, boolean isWishlisted) {
-        h.ivWishlist.setImageResource(isWishlisted
-                ? R.drawable.ic_favorite_filled
-                : R.drawable.ic_favorite_border);
-    }
+    // ── Wishlist: Add ─────────────────────────────────────────────────────────
 
     private void addToWishlist(String category, String product, String pack,
                                String userId, ProductModel item, ProductViewHolder holder) {
+
+        Log.d(TAG, "addToWishlist → category=" + category
+                + " product=" + product + " pack=" + pack + " user=" + userId);
+
         AddWishlistRequest request = new AddWishlistRequest(category, product, pack, userId);
 
         apiService.addWishlist(request).enqueue(new Callback<AddWishlistResponse>() {
             @Override
-            public void onResponse(Call<AddWishlistResponse> call, Response<AddWishlistResponse> response) {
-                if (response.isSuccessful() && response.body() != null
-                        && response.body().getNStatus() == 1) {
+            public void onResponse(Call<AddWishlistResponse> call,
+                                   Response<AddWishlistResponse> response) {
 
-                    item.setWishlisted(true);
-                    String wishlistId = response.body().getNWishlistCount();
-                    item.setWishlistId(wishlistId);
-                    wishlistManager.addWishlist(item.getItemId(), wishlistId);
+                Log.d(TAG, "addWishlist HTTP=" + response.code());
 
-                    updateWishlistIcon(holder, true);
-
-                    // ── Notify Activity: +1 wishlist ──────────────────────
-                    if (badgeListener != null) badgeListener.onWishlistCountChanged(+1);
-
-                    Toast.makeText(context, "Added to Wishlist ❤️", Toast.LENGTH_SHORT).show();
-                } else {
+                if (!response.isSuccessful() || response.body() == null) {
                     Toast.makeText(context, "Failed to add to wishlist", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "addWishlist failed: HTTP " + response.code());
+                    return;
                 }
+
+                AddWishlistResponse body = response.body();
+                Log.d(TAG, "n_status=" + body.getNStatus()
+                        + " n_wishlist_count=" + body.getNWishlistCount());
+
+                if (body.getNStatus() != 1) {
+                    Toast.makeText(context, "Failed to add to wishlist", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // ✅ API returns n_wishlist_count as the NEW total count,
+                //    NOT the individual wishlist ID. We store productId→packId
+                //    and use list-wishlist to get the real n_id later.
+                //    For now store n_wishlist_count as a reference key.
+                String wishlistCount = body.getNWishlistCount(); // e.g. "3"
+
+                item.setWishlisted(true);
+                item.setWishlistId(wishlistCount); // temporary; overwritten after list call
+
+                // ✅ Store productId + packId so WishlistScreen can use them for add-to-cart
+                wishlistManager.addWishlist(item.getItemId(), wishlistCount, item.getPackId());
+
+                updateWishlistIcon(holder, true);
+
+                if (badgeListener != null) badgeListener.onWishlistCountChanged(+1);
+
+                Toast.makeText(context, "Added to Wishlist ❤️", Toast.LENGTH_SHORT).show();
+
+                // ✅ Fetch actual n_id from list API and update WishlistManager
+                fetchAndStoreWishlistId(item, userId);
             }
+
             @Override
             public void onFailure(Call<AddWishlistResponse> call, Throwable t) {
                 Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "addWishlist onFailure: " + t.getMessage());
             }
         });
     }
 
+    /**
+     * After adding, call list-wishlist to get the real n_id for this product.
+     * This n_id is what delete-wishlist needs as "n_wishlist".
+     */
+    private void fetchAndStoreWishlistId(ProductModel item, String userId) {
+        com.example.myapplication.model.ListWishlistRequest req =
+                new com.example.myapplication.model.ListWishlistRequest(userId);
+
+        apiService.listWishlist(req).enqueue(
+                new Callback<com.example.myapplication.model.ListWishlistResponse>() {
+                    @Override
+                    public void onResponse(Call<com.example.myapplication.model.ListWishlistResponse> call,
+                                           Response<com.example.myapplication.model.ListWishlistResponse> response) {
+
+                        if (!response.isSuccessful() || response.body() == null
+                                || response.body().getNStatus() != 1
+                                || response.body().getJData() == null) return;
+
+                        for (com.example.myapplication.model.ListWishlistResponse.WishlistItem w
+                                : response.body().getJData()) {
+
+                            if (item.getItemId().equals(w.getNProduct())) {
+                                // ✅ n_id is what delete-wishlist needs
+                                String realWishlistId = w.getNId();
+                                item.setWishlistId(realWishlistId);
+                                wishlistManager.addWishlist(
+                                        item.getItemId(), realWishlistId, item.getPackId());
+                                Log.d(TAG, "Stored real wishlistId=" + realWishlistId
+                                        + " for product=" + item.getItemId());
+                                break;
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<com.example.myapplication.model.ListWishlistResponse> call,
+                                          Throwable t) {
+                        Log.e(TAG, "fetchAndStoreWishlistId failed: " + t.getMessage());
+                    }
+                });
+    }
+
+    // ── Wishlist: Remove ──────────────────────────────────────────────────────
+
     private void removeFromWishlist(ProductModel item, ProductViewHolder holder) {
         String userId     = "10";
         String wishlistId = wishlistManager.getWishlistId(item.getItemId());
+
+        Log.d(TAG, "removeFromWishlist → wishlistId=" + wishlistId
+                + " product=" + item.getItemId());
 
         if (isEmpty(wishlistId)) {
             Toast.makeText(context, "Cannot remove: ID not found", Toast.LENGTH_SHORT).show();
@@ -251,6 +327,7 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         }
 
         DeleteWishlistRequest request = new DeleteWishlistRequest(userId, wishlistId);
+
         apiService.deleteWishlist(request).enqueue(new Callback<CommonResponse>() {
             @Override
             public void onResponse(Call<CommonResponse> call, Response<CommonResponse> response) {
@@ -258,11 +335,10 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                         && response.body().getStatus() == 1) {
 
                     item.setWishlisted(false);
+                    item.setWishlistId(null);
                     wishlistManager.removeWishlist(item.getItemId());
-
                     updateWishlistIcon(holder, false);
 
-                    // ── Notify Activity: -1 wishlist ──────────────────────
                     if (badgeListener != null) badgeListener.onWishlistCountChanged(-1);
 
                     Toast.makeText(context, "Removed from Wishlist", Toast.LENGTH_SHORT).show();
@@ -270,6 +346,7 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                     Toast.makeText(context, "Failed to remove", Toast.LENGTH_SHORT).show();
                 }
             }
+
             @Override
             public void onFailure(Call<CommonResponse> call, Throwable t) {
                 Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
@@ -277,31 +354,24 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         });
     }
 
-    // ── Cart helpers ─────────────────────────────────────────────────────────
+    private void updateWishlistIcon(ProductViewHolder h, boolean isWishlisted) {
+        h.ivWishlist.setImageResource(isWishlisted
+                ? R.drawable.ic_favorite_filled
+                : R.drawable.ic_favorite_border);
+    }
 
-    /**
-     * @param cartDelta  Pass +1 when user taps '+', -1 when taps '-', 0 for first "Add to Cart"
-     *                   (the API success callback fires the actual +1 for first-add).
-     */
+    // ── Cart API ──────────────────────────────────────────────────────────────
+
     private void callAddCartApi(ProductModel item, int quantity,
                                 ProductViewHolder holder, int cartDelta) {
         String category = item.getCategory();
         String packId   = item.getPackId();
         String itemId   = item.getItemId();
 
-        Log.d(TAG, "━━━━ ADD TO CART ━━━━━━━━━━━━━━━━━━━━━━━━");
-        Log.d(TAG, "name     = " + item.getName());
-        Log.d(TAG, "category = " + category);
-        Log.d(TAG, "packId   = " + packId);
-        Log.d(TAG, "itemId   = " + itemId);
-        Log.d(TAG, "qty      = " + quantity);
-        Log.d(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
         if (isEmpty(category)) { showMissingToast("category", holder, item); return; }
         if (isEmpty(packId))   { showMissingToast("pack ID",  holder, item); return; }
         if (isEmpty(itemId))   { showMissingToast("item ID",  holder, item); return; }
 
-        // For first "Add to Cart" (quantity==1, cartDelta==0) we send +1 after API confirms.
         final int deltaToFire = (cartDelta == 0 && quantity == 1) ? +1 : cartDelta;
 
         AddCartRequest request = new AddCartRequest(
@@ -310,19 +380,12 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         apiService.addCart(request).enqueue(new Callback<CommonResponse>() {
             @Override
             public void onResponse(Call<CommonResponse> call, Response<CommonResponse> response) {
-                Log.d(TAG, "HTTP " + response.code());
                 if (response.isSuccessful() && response.body() != null) {
                     CommonResponse body = response.body();
-                    Log.d(TAG, "status=" + body.getStatus() + " | " + body.getMessage());
-
                     if (body.getStatus() == 1) {
                         item.setCartQty(String.valueOf(quantity));
-
-                        // ── Notify Activity: cart count changed ───────────
-                        if (badgeListener != null && deltaToFire != 0) {
+                        if (badgeListener != null && deltaToFire != 0)
                             badgeListener.onCartCountChanged(deltaToFire);
-                        }
-
                         Toast.makeText(context,
                                 quantity > 0 ? "Added to cart ✓" : "Removed from cart",
                                 Toast.LENGTH_SHORT).show();
@@ -333,11 +396,6 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                         resetToAddButton(holder, item);
                     }
                 } else {
-                    try {
-                        String err = response.errorBody() != null
-                                ? response.errorBody().string() : "unknown";
-                        Log.e(TAG, "HTTP error " + response.code() + ": " + err);
-                    } catch (Exception ignored) {}
                     Toast.makeText(context, "Request failed: " + response.code(),
                             Toast.LENGTH_SHORT).show();
                     resetToAddButton(holder, item);
@@ -345,15 +403,15 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             }
             @Override
             public void onFailure(Call<CommonResponse> call, Throwable t) {
-                Log.e(TAG, "Network error: " + t.getMessage());
                 Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
                 resetToAddButton(holder, item);
             }
         });
     }
 
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
     private void showMissingToast(String field, ProductViewHolder h, ProductModel item) {
-        Log.e(TAG, "FAIL: " + field + " is null");
         Toast.makeText(context, "Missing: " + field, Toast.LENGTH_LONG).show();
         resetToAddButton(h, item);
     }
@@ -365,8 +423,6 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         item.setCartQty("0");
     }
 
-    // ── Utility ──────────────────────────────────────────────────────────────
-
     private boolean isEmpty(String s) {
         return s == null || s.trim().isEmpty() || s.equalsIgnoreCase("null");
     }
@@ -375,7 +431,7 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         try { return Integer.parseInt(v.trim()); } catch (Exception e) { return 1; }
     }
 
-    // ── ViewHolders ──────────────────────────────────────────────────────────
+    // ── ViewHolders ───────────────────────────────────────────────────────────
 
     static class ProductViewHolder extends RecyclerView.ViewHolder {
         ImageView    ivImage, ivWishlist;

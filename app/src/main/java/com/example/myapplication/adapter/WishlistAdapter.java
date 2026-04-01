@@ -38,6 +38,7 @@ public class WishlistAdapter extends RecyclerView.Adapter<WishlistAdapter.Wishli
     private final OnRemoveListener removeListener;
     private final ApiService apiService;
     private final WishlistManager wishlistManager;
+    private final TokenManager tokenManager; // ✅ ADDED
 
     public interface OnRemoveListener {
         void onRemove(int position, String wishlistId);
@@ -49,6 +50,7 @@ public class WishlistAdapter extends RecyclerView.Adapter<WishlistAdapter.Wishli
         this.removeListener = removeListener;
         this.apiService = RetrofitClient.getClient(context);
         this.wishlistManager = WishlistManager.getInstance(context);
+        this.tokenManager = new TokenManager(context); // ✅ ADDED
     }
 
     @NonNull
@@ -62,6 +64,12 @@ public class WishlistAdapter extends RecyclerView.Adapter<WishlistAdapter.Wishli
     public void onBindViewHolder(@NonNull WishlistViewHolder holder, int position) {
         ListWishlistResponse.WishlistItem item = list.get(position);
 
+        // ✅ RESET VIEW STATE on every bind — critical for RecyclerView view recycling
+        holder.btnAddToCart.setVisibility(View.VISIBLE);
+        holder.layoutQty.setVisibility(View.GONE);
+        holder.tvQtyCount.setText("1");
+
+        // Bind data
         holder.tvName.setText(item.getCItemCode() != null ? item.getCItemCode() : "");
         holder.tvSubtitle.setText(item.getCFabric() != null ? item.getCFabric() : "");
         holder.tvPrice.setText("₹" + (item.getNSellingPrice() != null ? item.getNSellingPrice() : "0"));
@@ -76,30 +84,26 @@ public class WishlistAdapter extends RecyclerView.Adapter<WishlistAdapter.Wishli
                 .centerCrop()
                 .into(holder.ivImage);
 
-        // ✅ Initialize quantity to 1
-        int currentQty = safeInt(holder.tvQtyCount.getText().toString());
-        if (currentQty == 0) currentQty = 1;
-        holder.tvQtyCount.setText(String.valueOf(currentQty));
-
-        // ✅ Remove from Wishlist button
+        // ✅ Remove from Wishlist
         holder.btnRemove.setOnClickListener(v -> {
             int pos = holder.getAdapterPosition();
             if (pos != RecyclerView.NO_POSITION) {
-                removeFromWishlist(item, holder, pos);
+                removeFromWishlist(item, pos);
             }
         });
 
-        // ✅ Add to Cart button (first time)
+        // ✅ Add to Cart (first tap — shows qty controls)
         holder.btnAddToCart.setOnClickListener(v -> {
             int pos = holder.getAdapterPosition();
             if (pos != RecyclerView.NO_POSITION) {
                 holder.btnAddToCart.setVisibility(View.GONE);
                 holder.layoutQty.setVisibility(View.VISIBLE);
+                holder.tvQtyCount.setText("1");
                 addToCart(item, 1);
             }
         });
 
-        // ✅ Plus button (increase qty)
+        // ✅ Plus — increase qty
         holder.btnPlus.setOnClickListener(v -> {
             int pos = holder.getAdapterPosition();
             if (pos != RecyclerView.NO_POSITION) {
@@ -109,7 +113,7 @@ public class WishlistAdapter extends RecyclerView.Adapter<WishlistAdapter.Wishli
             }
         });
 
-        // ✅ Minus button (decrease qty)
+        // ✅ Minus — decrease qty or remove from cart
         holder.btnMinus.setOnClickListener(v -> {
             int pos = holder.getAdapterPosition();
             if (pos != RecyclerView.NO_POSITION) {
@@ -119,9 +123,10 @@ public class WishlistAdapter extends RecyclerView.Adapter<WishlistAdapter.Wishli
                     holder.tvQtyCount.setText(String.valueOf(newQty));
                     addToCart(item, newQty);
                 } else {
-                    // Remove from cart (qty = 0)
+                    // qty hits 0 — revert to Add to Cart button
                     holder.layoutQty.setVisibility(View.GONE);
                     holder.btnAddToCart.setVisibility(View.VISIBLE);
+                    holder.tvQtyCount.setText("1");
                     addToCart(item, 0);
                 }
             }
@@ -130,22 +135,25 @@ public class WishlistAdapter extends RecyclerView.Adapter<WishlistAdapter.Wishli
 
     @Override
     public int getItemCount() {
-        return list.size();
+        return list != null ? list.size() : 0;
     }
 
-    // ✅ Add to Cart with quantity parameter
+    // ─── Add to Cart ──────────────────────────────────────────────────────────
+
     private void addToCart(ListWishlistResponse.WishlistItem item, int quantity) {
         String category = item.getNCategory();
-        String product = item.getNProduct();
-        String pack = item.getCPackName();
-        String userId = "10";
+        String product  = item.getNProduct();
+        String pack     = item.getNPack();
+
+        // ✅ Use real userId from TokenManager
+        String userId = tokenManager.getUserId();
+        if (isEmpty(userId)) userId = "10"; // fallback
 
         if (isEmpty(category) || isEmpty(product) || isEmpty(pack)) {
             Toast.makeText(context, "Missing product information", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // ✅ Pass quantity in the request
         AddCartRequest request = new AddCartRequest(category, pack, product, String.valueOf(quantity), userId);
 
         apiService.addCart(request).enqueue(new Callback<CommonResponse>() {
@@ -154,7 +162,6 @@ public class WishlistAdapter extends RecyclerView.Adapter<WishlistAdapter.Wishli
                 if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
                     if (quantity > 0) {
                         Toast.makeText(context, "Added to cart ✓", Toast.LENGTH_SHORT).show();
-                        // ✅ NOTIFY ACTIVITY TO REFRESH CART
                         if (context instanceof WishlistScreen) {
                             ((WishlistScreen) context).onCartUpdated();
                         }
@@ -162,7 +169,7 @@ public class WishlistAdapter extends RecyclerView.Adapter<WishlistAdapter.Wishli
                         Toast.makeText(context, "Removed from cart", Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(context, "Failed to add to cart", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Failed to update cart", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -173,9 +180,13 @@ public class WishlistAdapter extends RecyclerView.Adapter<WishlistAdapter.Wishli
         });
     }
 
-    // ✅ Remove from Wishlist
-    private void removeFromWishlist(ListWishlistResponse.WishlistItem item, WishlistViewHolder holder, int position) {
-        String userId = "10";
+    // ─── Remove from Wishlist ─────────────────────────────────────────────────
+
+    private void removeFromWishlist(ListWishlistResponse.WishlistItem item, int position) {
+        // ✅ Use real userId from TokenManager
+        String userId     = tokenManager.getUserId();
+        if (isEmpty(userId)) userId = "10"; // fallback
+
         String wishlistId = item.getNId();
 
         if (isEmpty(wishlistId)) {
@@ -184,16 +195,14 @@ public class WishlistAdapter extends RecyclerView.Adapter<WishlistAdapter.Wishli
         }
 
         DeleteWishlistRequest request = new DeleteWishlistRequest(userId, wishlistId);
+
         apiService.deleteWishlist(request).enqueue(new Callback<CommonResponse>() {
             @Override
             public void onResponse(Call<CommonResponse> call, Response<CommonResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
-                    // ✅ Remove from persistent storage
                     wishlistManager.removeWishlist(item.getNProduct());
-
-                    // ✅ Notify listener to remove from list
                     removeListener.onRemove(position, wishlistId);
-                    Toast.makeText(context, "Removed from Wishlist", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Removed from wishlist", Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(context, "Failed to remove", Toast.LENGTH_SHORT).show();
                 }
@@ -206,34 +215,42 @@ public class WishlistAdapter extends RecyclerView.Adapter<WishlistAdapter.Wishli
         });
     }
 
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
     private boolean isEmpty(String s) {
         return s == null || s.trim().isEmpty() || s.equalsIgnoreCase("null");
     }
 
     private int safeInt(String v) {
-        try { return Integer.parseInt(v.trim()); } catch (Exception e) { return 1; }
+        try {
+            return Integer.parseInt(v.trim());
+        } catch (Exception e) {
+            return 1;
+        }
     }
 
+    // ─── ViewHolder ───────────────────────────────────────────────────────────
+
     static class WishlistViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivImage, btnRemove;
-        TextView tvName, tvSubtitle, tvPrice, tvMrp, tvPackName;
+        ImageView    ivImage, btnRemove;
+        TextView     tvName, tvSubtitle, tvPrice, tvMrp, tvPackName;
         LinearLayout btnAddToCart, layoutQty;
-        TextView tvQtyCount, btnMinus, btnPlus;
+        TextView     tvQtyCount, btnMinus, btnPlus;
 
         WishlistViewHolder(@NonNull View v) {
             super(v);
-            ivImage = v.findViewById(R.id.iv_product_image);
-            btnRemove = v.findViewById(R.id.btn_remove_wishlist);
-            tvName = v.findViewById(R.id.tv_product_name);
-            tvSubtitle = v.findViewById(R.id.tv_product_subtitle);
-            tvPrice = v.findViewById(R.id.tv_selling_price);
-            tvMrp = v.findViewById(R.id.tv_mrp);
-            tvPackName = v.findViewById(R.id.tv_pack_name);
+            ivImage      = v.findViewById(R.id.iv_product_image);
+            btnRemove    = v.findViewById(R.id.btn_remove_wishlist);
+            tvName       = v.findViewById(R.id.tv_product_name);
+            tvSubtitle   = v.findViewById(R.id.tv_product_subtitle);
+            tvPrice      = v.findViewById(R.id.tv_selling_price);
+            tvMrp        = v.findViewById(R.id.tv_mrp);
+            tvPackName   = v.findViewById(R.id.tv_pack_name);
             btnAddToCart = v.findViewById(R.id.btn_add_to_cart);
-            layoutQty = v.findViewById(R.id.layout_qty);
-            tvQtyCount = v.findViewById(R.id.tv_qty_count);
-            btnMinus = v.findViewById(R.id.btn_minus);
-            btnPlus = v.findViewById(R.id.btn_plus);
+            layoutQty    = v.findViewById(R.id.layout_qty);
+            tvQtyCount   = v.findViewById(R.id.tv_qty_count);
+            btnMinus     = v.findViewById(R.id.btn_minus);
+            btnPlus      = v.findViewById(R.id.btn_plus);
         }
     }
 }

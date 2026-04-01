@@ -2,68 +2,105 @@ package com.example.myapplication.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class WishlistManager {
-    private static final String PREF_NAME = "WISHLIST_PREF";
-    private static final String WISHLIST_KEY = "wishlist_map";
 
-    private static WishlistManager instance;
-    private final SharedPreferences pref;
-    private final Gson gson;
-    private Map<String, String> wishlistMap; // productId -> wishlistId
+    private static final String PREF_NAME     = "WishlistPrefs";
+    private static final String KEY_IDS       = "wishlist_ids";
+    private static final String PREFIX_WISHID = "wish_";
+    private static final String PREFIX_PACKID = "pack_";
+
+    private static volatile WishlistManager instance;
+    private final SharedPreferences prefs;
 
     private WishlistManager(Context context) {
-        this.pref = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        this.gson = new Gson();
-        loadWishlist();
+        prefs = context.getApplicationContext()
+                .getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     }
 
-    public static synchronized WishlistManager getInstance(Context context) {
+    public static WishlistManager getInstance(Context context) {
         if (instance == null) {
-            instance = new WishlistManager(context);
+            synchronized (WishlistManager.class) {
+                if (instance == null) {
+                    instance = new WishlistManager(context);
+                }
+            }
         }
         return instance;
     }
 
-    private void loadWishlist() {
-        String json = pref.getString(WISHLIST_KEY, "{}");
-        Type type = new TypeToken<Map<String, String>>(){}.getType();
-        wishlistMap = gson.fromJson(json, type);
-        if (wishlistMap == null) wishlistMap = new HashMap<>();
-    }
-    private void saveWishlist() {
-        String json = gson.toJson(wishlistMap);
-        pref.edit().putString(WISHLIST_KEY, json).apply();
-    }
+    // ─────────────────────────────────────────────────────────────
+    // ADD
+    // ─────────────────────────────────────────────────────────────
     public void addWishlist(String productId, String wishlistId) {
-        wishlistMap.put(productId, wishlistId);
-        saveWishlist();
+        addWishlist(productId, wishlistId, null);
     }
 
+    public void addWishlist(String productId, String wishlistId, String packId) {
+        Set<String> ids = new HashSet<>(getProductIds()); // ✅ COPY
+
+        ids.add(productId);
+
+        prefs.edit()
+                .putStringSet(KEY_IDS, ids)
+                .putString(PREFIX_WISHID + productId, wishlistId)
+                .apply();
+
+        if (packId != null) {
+            prefs.edit()
+                    .putString(PREFIX_PACKID + productId, packId)
+                    .apply();
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // REMOVE
+    // ─────────────────────────────────────────────────────────────
     public void removeWishlist(String productId) {
-        wishlistMap.remove(productId);
-        saveWishlist();
+        Set<String> ids = new HashSet<>(getProductIds()); // ✅ COPY
+
+        ids.remove(productId);
+
+        prefs.edit()
+                .putStringSet(KEY_IDS, ids)
+                .remove(PREFIX_WISHID + productId)
+                .remove(PREFIX_PACKID + productId)
+                .apply();
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // GETTERS
+    // ─────────────────────────────────────────────────────────────
     public boolean isWishlisted(String productId) {
-        return wishlistMap.containsKey(productId);
+        return getProductIds().contains(productId);
     }
 
     public String getWishlistId(String productId) {
-        return wishlistMap.getOrDefault(productId, "");
+        return prefs.getString(PREFIX_WISHID + productId, null);
     }
+
+    public String getPackId(String productId) {
+        return prefs.getString(PREFIX_PACKID + productId, null);
+    }
+
     public int getWishlistCount() {
-        return wishlistMap.size();
+        return getProductIds().size();
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // INTERNAL SAFE FETCH
+    // ─────────────────────────────────────────────────────────────
+    private Set<String> getProductIds() {
+        return new HashSet<>(prefs.getStringSet(KEY_IDS, new HashSet<>())); // ✅ SAFE COPY
+    }
 
+    // ─────────────────────────────────────────────────────────────
+    // CLEAR (Optional)
+    // ─────────────────────────────────────────────────────────────
     public void clearAll() {
-        wishlistMap.clear();
-        saveWishlist();
+        prefs.edit().clear().apply();
     }
 }
