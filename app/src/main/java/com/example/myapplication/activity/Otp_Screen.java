@@ -16,8 +16,6 @@ import androidx.core.view.WindowCompat;
 import com.example.myapplication.R;
 import com.example.myapplication.model.RefreshTokenRequest;
 import com.example.myapplication.model.RefreshTokenResponse;
-import com.example.myapplication.model.RegisterDetailsRequest;
-import com.example.myapplication.model.RegisterDetailsResponse;
 import com.example.myapplication.model.VerifyOtpRequest;
 import com.example.myapplication.model.VerifyOtpResponse;
 import com.example.myapplication.network.ApiService;
@@ -35,20 +33,20 @@ public class Otp_Screen extends AppCompatActivity {
     private static final String TAG = "Otp_Screen";
 
     private MaterialButton btn_submit;
-    private PinView pinview;
+    private PinView        pinview;
     private ProgressDialog progressDialog;
-    private ApiService apiService;
-    private TokenManager tokenManager;
-    private String mobile;
+    private ApiService     apiService;
+    private TokenManager   tokenManager;
+    private String         mobile = "";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.otp_screen);
 
-        btn_submit = findViewById(R.id.btn_submit);
-        pinview = findViewById(R.id.pinview);
-        apiService = RetrofitClient.getClient(this);
+        btn_submit   = findViewById(R.id.btn_submit);
+        pinview      = findViewById(R.id.pinview);
+        apiService   = RetrofitClient.getClient(this);
         tokenManager = new TokenManager(this);
 
         mobile = getIntent().getStringExtra("mobile");
@@ -62,7 +60,8 @@ public class Otp_Screen extends AppCompatActivity {
                     ? pinview.getText().toString().trim() : "";
 
             if (otp.length() != 6) {
-                Toast.makeText(this, "Enter valid 6-digit OTP", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Enter valid 6-digit OTP",
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -71,7 +70,8 @@ public class Otp_Screen extends AppCompatActivity {
         });
     }
 
-    // ✅ VERIFY OTP
+
+
     private void verifyOtp(String mobile, String otp) {
 
         apiService.verifyOtp(new VerifyOtpRequest(mobile, otp))
@@ -80,85 +80,18 @@ public class Otp_Screen extends AppCompatActivity {
                     @Override
                     public void onResponse(Call<VerifyOtpResponse> call,
                                            Response<VerifyOtpResponse> res) {
-
                         hideLoader();
 
-                        if (!res.isSuccessful() || res.body() == null
-                                || res.body().getNStatus() != 1) {
-
+                        if (!res.isSuccessful() || res.body() == null) {
                             Toast.makeText(Otp_Screen.this,
                                     "Verification failed. Try again.",
                                     Toast.LENGTH_SHORT).show();
                             return;
                         }
 
-                        // ✅ LOGIN SUCCESS SAVE
-                        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
-                        prefs.edit()
-                                .putBoolean("is_logged_in", true)
-                                .putString("last_screen", "SetupSteps")
-                                .apply();
-
-                        // ✅ TOKEN SAVE
-                        VerifyOtpResponse.TokenData token = res.body().getJData().get(0);
-                        tokenManager.saveToken(token.getJToken());
-                        tokenManager.saveAccess(token.getJAccess());
-
-                        if (token.getJLogin() != null && !token.getJLogin().isEmpty()) {
-                            tokenManager.saveUserId(token.getJLogin().get(0).getNUserId());
-                        }
-
-                        refreshTokenSilently();
-
-                        int processType = token.getNProcessType();
-
-                        switch (processType) {
-
-                            case 3:
-                                goToMain();
-                                break;
-
-                            case 2:
-                                showVerificationPendingAlert();
-                                break;
-
-                            case 1:
-                            default:
-                                showLoader("Loading details...");
-                                fetchRegisterDetails();
-                                break;
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<VerifyOtpResponse> call, Throwable t) {
-                        hideLoader();
-                        Toast.makeText(Otp_Screen.this,
-                                "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-
-    // ✅ FETCH REGISTER DETAILS
-    private void fetchRegisterDetails() {
-
-        apiService.getRegisterDetails(new RegisterDetailsRequest(mobile))
-                .enqueue(new Callback<RegisterDetailsResponse>() {
-
-                    @Override
-                    public void onResponse(Call<RegisterDetailsResponse> call,
-                                           Response<RegisterDetailsResponse> res) {
-
-                        hideLoader();
-
-                        if (!res.isSuccessful() || res.body() == null) {
-                            Toast.makeText(Otp_Screen.this,
-                                    "Failed to load details",
-                                    Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-
-                        RegisterDetailsResponse body = res.body();
+                        VerifyOtpResponse body = res.body();
+                        Log.d(TAG, "n_status=" + body.getNStatus()
+                                + " | n_process_type=" + body.getNProcessType());
 
                         if (body.getNStatus() != 1) {
                             Toast.makeText(Otp_Screen.this,
@@ -166,73 +99,119 @@ public class Otp_Screen extends AppCompatActivity {
                             return;
                         }
 
-                        routeToScreen(body.getNStep());
+
+                        if (body.getJData() != null && !body.getJData().isEmpty()) {
+
+                            VerifyOtpResponse.TokenData token = body.getJData().get(0);
+
+                            tokenManager.saveToken(token.getJToken());
+                            tokenManager.saveAccess(token.getJAccess());
+
+
+                            if (token.getJLogin() != null && !token.getJLogin().isEmpty()) {
+                                String userId = token.getJLogin().get(0).getNUserId();
+                                tokenManager.saveUserId(userId);
+                                Log.d(TAG, "Saved userId = " + userId);
+                            }
+                        }
+
+
+                        getSharedPreferences("app_prefs", MODE_PRIVATE)
+                                .edit()
+                                .putBoolean("is_logged_in", true)
+                                .apply();
+
+
+                        refreshTokenSilently();
+
+
+                        int processType = body.getNProcessType();
+                        Log.d(TAG, "processType = " + processType);
+
+                        switch (processType) {
+
+                            case 3:
+
+                                goToMain();
+                                break;
+
+                            case 2:
+
+                                showVerificationPendingAlert();
+                                break;
+
+                            case 1:
+                            default:
+
+                                goToSetup();
+                                break;
+                        }
                     }
 
                     @Override
-                    public void onFailure(Call<RegisterDetailsResponse> call, Throwable t) {
+                    public void onFailure(Call<VerifyOtpResponse> call, Throwable t) {
                         hideLoader();
+                        Log.e(TAG, "verifyOtp failure: " + t.getMessage());
                         Toast.makeText(Otp_Screen.this,
                                 "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
-    // ✅ ROUTING
-    private void routeToScreen(int step) {
+    // ─────────────────────────────────────────────
+    // Navigation
+    // ─────────────────────────────────────────────
 
-        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
-
-        if (step == 1) {
-
-            prefs.edit().putString("last_screen", "OwnerDetails").apply();
-            startActivity(new Intent(this, OwnerDetailsActivity.class));
-
-        } else if (step == 2) {
-
-            prefs.edit().putString("last_screen", "BusinessDetails").apply();
-            startActivity(new Intent(this, BusinessDetailsActivity.class));
-
-        } else if (step == 3) {
-
-            prefs.edit().putString("last_screen", "SetupSteps").apply();
-            startActivity(new Intent(this, SetupStepsActivity.class));
-
-        } else {
-
-            prefs.edit().putString("last_screen", "Main").apply();
-            startActivity(new Intent(this, MainActivity.class));
-        }
-
-        finish();
-    }
-
-    // ✅ NAVIGATION
     private void goToMain() {
+        getSharedPreferences("app_prefs", MODE_PRIVATE)
+                .edit()
+                .putBoolean("is_logged_in", true)
+                .putString("last_screen", "Main")
+                .apply();
 
-        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
-        prefs.edit().putString("last_screen", "Main").apply();
-
-        Intent i = new Intent(this, MainActivity.class);
+        Intent i = new Intent(Otp_Screen.this, MainActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(i);
         finish();
     }
 
+    private void goToSetup() {
+        getSharedPreferences("app_prefs", MODE_PRIVATE)
+                .edit()
+                .putString("last_screen", "SetupSteps")
+                .apply();
+
+        Intent i = new Intent(Otp_Screen.this, SetupStepsActivity.class);
+        i.putExtra("mobile", mobile);
+        startActivity(i);
+        finish();
+    }
+
+    // ─────────────────────────────────────────────
+    // Verification Pending Alert
+    // ─────────────────────────────────────────────
+
     private void showVerificationPendingAlert() {
         new AlertDialog.Builder(this)
                 .setTitle("Verification Pending")
-                .setMessage("Please wait for approval")
+                .setMessage("Your account is under verification.\nPlease wait for approval.")
                 .setCancelable(false)
                 .setPositiveButton("OK", (d, w) -> {
-                    goToMain();
+                    d.dismiss();
+                    // Login page-க்கு திரும்பு
+                    Intent i = new Intent(Otp_Screen.this, LoginPage.class);
+                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(i);
+                    finish();
                 })
                 .show();
     }
 
-    // ✅ TOKEN REFRESH
-    private void refreshTokenSilently() {
+    // ─────────────────────────────────────────────
+    // Silent Token Refresh
+    // ─────────────────────────────────────────────
 
+    private void refreshTokenSilently() {
         String access = tokenManager.getAccess();
         if (access == null || access.isEmpty()) return;
 
@@ -241,24 +220,30 @@ public class Otp_Screen extends AppCompatActivity {
                     @Override
                     public void onResponse(Call<RefreshTokenResponse> call,
                                            Response<RefreshTokenResponse> res) {
-
                         if (res.isSuccessful() && res.body() != null
                                 && res.body().getJ_data() != null
                                 && !res.body().getJ_data().isEmpty()) {
 
-                            tokenManager.saveToken(res.body().getJ_data().get(0).getJ_token());
-                            tokenManager.saveAccess(res.body().getJ_data().get(0).getJ_access());
+                            tokenManager.saveToken(
+                                    res.body().getJ_data().get(0).getJ_token());
+                            tokenManager.saveAccess(
+                                    res.body().getJ_data().get(0).getJ_access());
+
+                            Log.d(TAG, "Token refreshed silently");
                         }
                     }
 
                     @Override
                     public void onFailure(Call<RefreshTokenResponse> call, Throwable t) {
-                        Log.e(TAG, "Token refresh failed");
+                        Log.e(TAG, "Token refresh failed: " + t.getMessage());
                     }
                 });
     }
 
-    // ✅ LOADER
+    // ─────────────────────────────────────────────
+    // Loader
+    // ─────────────────────────────────────────────
+
     private void setupLoader() {
         progressDialog = new ProgressDialog(this);
         progressDialog.setCancelable(false);
@@ -266,14 +251,18 @@ public class Otp_Screen extends AppCompatActivity {
 
     private void showLoader(String msg) {
         progressDialog.setMessage(msg);
-        progressDialog.show();
+        if (!progressDialog.isShowing()) progressDialog.show();
     }
 
     private void hideLoader() {
-        if (progressDialog.isShowing()) progressDialog.dismiss();
+        if (progressDialog != null && progressDialog.isShowing())
+            progressDialog.dismiss();
     }
 
-    // ✅ STATUS BAR
+    // ─────────────────────────────────────────────
+    // Status Bar
+    // ─────────────────────────────────────────────
+
     private void setupStatusBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             getWindow().setStatusBarColor(
@@ -281,6 +270,7 @@ public class Otp_Screen extends AppCompatActivity {
             WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
                     .setAppearanceLightStatusBars(false);
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            //noinspection deprecation
             getWindow().setStatusBarColor(
                     getResources().getColor(R.color.red_primary));
         }

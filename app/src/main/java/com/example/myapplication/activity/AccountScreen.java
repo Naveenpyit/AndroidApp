@@ -522,6 +522,59 @@ repseonse
     ]
 }
 
+{
+    "n_status": 1,
+    "c_message": "OTP verified successfully",
+    "n_process_type": 1,
+    "j_data": [
+        {
+            "j_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbiI6IlhKdzhZRmZnS0tJeGgySUZLNnoyN0dSc3ZhbjZlUkp2IiwidGltZSI6MTc3NTEyMTI1OX0.4qUTv54QBaHaQ-gunpyMvwtYpKlnRJsMyVbucew0ig4",
+            "j_access": "XJw8YFfgKKIxh2IFK6z27GRsvan6eRJv",
+            "j_login": [
+                {
+                    "n_user_id": "73",
+                    "c_user_name": "Tony Stark",
+                    "n_user_mobile": "9360610830"
+                }
+            ]
+        }
+    ]
+}
+
+{
+    "n_status": 1,
+    "c_message": "User Registered details fetched successfully",
+    "n_step": "2",
+    "j_data": {
+        "owner_details": {
+            "c_name": "Nivetha",
+            "n_mobile": "6383440306",
+            "c_email": "nivethainfo2904@gmail.com"
+        },
+        "business_details": {
+            "n_type": "3",
+            "n_verify_type": "1",
+            "c_pan": "AAAAA1234A",
+            "c_gst": "",
+            "c_image": "https://www.tomhiddleb2b.com/public/uploads/customer/"
+        },
+        "address_details": {
+            "n_address_type": "2",
+            "n_pincode": "641687",
+            "c_address": "482R+2VG, Alangadu, Karuvampalayam, Tiruppur, Tamil Nadu 641687, India",
+            "n_state": "1",
+            "n_city": "127",
+            "c_longitude": "77.3421167",
+            "c_latitude": "11.1004367"
+        },
+        "is_informations": {
+            "n_owner": 1,
+            "n_business": 1,
+            "n_address": 1
+        }
+    }
+}
+
 */
 
     @Override
