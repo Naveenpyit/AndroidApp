@@ -101,9 +101,6 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         });
     }
 
-    // ─────────────────────────────────────────────
-    // ADD WISHLIST
-    // ─────────────────────────────────────────────
 
     private void addWishlist(ProductModel p, ViewHolder h) {
 

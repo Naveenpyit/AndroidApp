@@ -125,7 +125,8 @@ public class Otp_Screen extends AppCompatActivity {
                         refreshTokenSilently();
 
 
-                        int processType = body.getNProcessType();
+                       int processType = body.getNProcessType();
+                        //int processType =3;
                         Log.d(TAG, "processType = " + processType);
 
                         switch (processType) {

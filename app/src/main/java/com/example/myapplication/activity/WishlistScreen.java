@@ -77,17 +77,11 @@ public class WishlistScreen extends AppCompatActivity {
         btnBack.setOnClickListener(v -> onBackPressed());
     }
 
-    // ─────────────────────────────────────────────
-    // Fetch Wishlist — FIXED
-    // ─────────────────────────────────────────────
-
     private void fetchWishlist() {
         showLoader();
 
-        // ✅ Get userId safely
         String userId = tokenManager.getUserId();
 
-        // ✅ fallback "10" வேண்டாம் — proper error காட்டு
         if (userId == null || userId.trim().isEmpty()) {
             dismissLoader();
             showError("Session expired. Please login again.");

@@ -428,7 +428,37 @@ request
 
 ====================================================
 
+{
+    "n_status": 1,
+    "c_message": "OTP verified successfully",
+    "n_process_type": 1,
+    "j_data": [
+        {
+            "j_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbiI6Ijljb3YwZUhUbmpzRGZKVnF5Nm1jVU8wb2FMaGdYNWN4IiwidGltZSI6MTc3NTEzMDA3NX0.m7vRh26VtptL1PWB865Ayq7gGDYqbRdkPN5LtC4__RA",
+            "j_access": "9cov0eHTnjsDfJVqy6mcUO0oaLhgX5cx",
+            "j_login": [
+                {
+                    "n_user_id": "28",
+                    "c_user_name": "INDIRA",
+                    "n_user_mobile": "8608079111"
+                }
+            ]
+        }
+    ]
+}
 
+{
+    "n_status": 1,
+    "c_message": "OTP verified successfully",
+    "j_data": [
+        {
+            "j_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbiI6IlR5NGVibnJ5dmp3WXNxeldaVWo1TnAyZU5PQ29vVllhIiwidGltZSI6MTc3NTEzMjk3MX0.-Qg57DIW8KeHKeXtYmmXKfPQXd-fjYPcalwl5zy11Ws",
+            "j_access": "Ty4ebnryvjwYsqzWZUj5Np2eNOCooVYa",
+            "j_login": []
+        }
+    ],
+    "n_process_type": 3
+}
 eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbiI6IkJaR244dmNkTzFjMlRqNXJJbHBXOEdzZXRRRDFFbXNrIiwidGltZSI6MTc3NDc1NDUxMX0.RzuVWTzdSIXCj6w9qPJp8Txp1C5URGBXgPsGgZut6IM
 
 1.reg list api

@@ -185,52 +185,58 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
 
     // ================= STATE API =================
 
+    // DeliveryAddressActivity.java — fetchStateList() fix
+
     private void fetchStateList() {
+        dialog.show(); // loader காட்டு
 
         apiService.getStateList().enqueue(new Callback<StateListResponse>() {
             @Override
             public void onResponse(Call<StateListResponse> call, Response<StateListResponse> response) {
+                dialog.dismiss();
 
-                if (response.isSuccessful() && response.body() != null) {
+                if (response.isSuccessful() && response.body() != null
+                        && response.body().getNStatus() == 1) { // ← status check சேர்
 
                     stateList = response.body().getJData();
 
                     List<String> names = new ArrayList<>();
                     names.add("Select State");
-
                     for (StateListResponse.StateData s : stateList) {
                         names.add(s.getCStateName());
                     }
 
                     ArrayAdapter<String> adapter = new ArrayAdapter<>(
                             DeliveryAddressActivity.this,
-                            android.R.layout.simple_spinner_item,
-                            names
-                    );
-
+                            android.R.layout.simple_spinner_item, names);
                     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                     spinnerState.setAdapter(adapter);
 
                     spinnerState.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                         @Override
-                        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-                            if (position > 0) {
-                                selectedStateId = stateList.get(position - 1).getNId();
+                        public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+                            if (pos > 0) {
+                                selectedStateId = stateList.get(pos - 1).getNId();
                                 fetchCityList(selectedStateId);
                             }
                         }
-
-                        @Override
-                        public void onNothingSelected(AdapterView<?> parent) {}
+                        @Override public void onNothingSelected(AdapterView<?> parent) {}
                     });
 
+                } else {
+                    // Response body null or status != 1
+                    Toast.makeText(DeliveryAddressActivity.this,
+                            "State list empty / API error", Toast.LENGTH_LONG).show();
+                    Log.e("API", "State Response: " + response.code() + " body: " + response.body());
                 }
             }
 
             @Override
             public void onFailure(Call<StateListResponse> call, Throwable t) {
-                Toast.makeText(DeliveryAddressActivity.this, "State API Failed", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+                Toast.makeText(DeliveryAddressActivity.this,
+                        "State API Failed: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                Log.e("API", "State Fail", t); // ← Logcat-ல் பார்க்கலாம்
             }
         });
     }
