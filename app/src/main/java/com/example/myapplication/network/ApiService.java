@@ -82,8 +82,7 @@ public interface ApiService {
     Call<CommonResponse> updateCart(@Body UpdateCartRequest request);
 
     @POST("add-wishlist")
-    Call<CommonResponse> addWishlist(@Body AddWishlistRequest request);
-
+    Call<AddWishlistResponse> addWishlist(@Body AddWishlistRequest request);
     @POST("delete-wishlist")
     Call<CommonResponse> deleteWishlist(@Body DeleteWishlistRequest request);
 

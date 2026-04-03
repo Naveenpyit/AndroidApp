@@ -14,6 +14,9 @@ public class ProductModel {
     private String random;
 
     @SerializedName("id")
+    private String id;
+
+    @SerializedName("n_item_id")
     private String itemId;
 
     @SerializedName("n_category")
@@ -91,6 +94,7 @@ public class ProductModel {
 
     public String getName()         { return name; }
     public String getRandom()       { return random; }
+    public String getId()       { return id; }
     public String getItemId()       { return itemId; }
     public String getCategory()     { return category; }
     public String getCategoryName() { return categoryName; }

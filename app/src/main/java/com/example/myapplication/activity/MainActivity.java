@@ -34,6 +34,7 @@ import com.example.myapplication.model.SectionModel;
 import com.example.myapplication.network.ApiService;
 import com.example.myapplication.network.RetrofitClient;
 import com.example.myapplication.utils.SearchUtils;
+import com.example.myapplication.utils.TokenManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
@@ -117,8 +118,11 @@ public class MainActivity extends AppCompatActivity {
         womensAdapter = new SectionAdapter(this, womensList, "7");
         women_collection.setAdapter(womensAdapter);
 
+
+
         rv_products.setLayoutManager(new GridLayoutManager(this, 2));
-        productAdapter = new ProductAdapter(this, displayList);
+        TokenManager tokenManager = new TokenManager(this);
+        productAdapter = new ProductAdapter(this, displayList, tokenManager);
         rv_products.setAdapter(productAdapter);
         rv_products.setNestedScrollingEnabled(false);
 
@@ -190,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void DashboardApi() {
         showLoader();
-        apiService.getCategoryList(new ListCategoryRequest("4")).enqueue(new Callback<ListCategoryResponse>() {
+        apiService.getCategoryList(new ListCategoryRequest("28")).enqueue(new Callback<ListCategoryResponse>() {
             @Override
             public void onResponse(Call<ListCategoryResponse> call, Response<ListCategoryResponse> response) {
                 dismissLoader();
@@ -229,7 +233,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void HomeProductsApi() {
         showLoader();
-        apiService.getHomeProducts(new HomeProductsRequest("1")).enqueue(new Callback<HomeProductsResponse>() {
+        apiService.getHomeProducts(new HomeProductsRequest("28")).enqueue(new Callback<HomeProductsResponse>() {
             @Override
             public void onResponse(Call<HomeProductsResponse> call, Response<HomeProductsResponse> response) {
                 dismissLoader();

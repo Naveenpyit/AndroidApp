@@ -47,7 +47,7 @@ public class RegisterInsertRequest {
     private String nAddressType;
 
     @SerializedName("n_pincode")
-    private String nPincode; // API field named n_pincode but sample shows c_pincode — use whichever the API accepts
+    private String nPincode;
 
     @SerializedName("c_pincode")
     private String cPincode;
@@ -82,9 +82,11 @@ public class RegisterInsertRequest {
     }
 
     /** Step 2 – Business details */
-    public static RegisterInsertRequest forBusiness(String mobile, String businessType,
+    public static RegisterInsertRequest forBusiness(String mobile,
+                                                    String businessType,
                                                     String verifyType,
-                                                    String pan, String gst,
+                                                    String pan,
+                                                    String gst,
                                                     String imageBase64OrUrl) {
         RegisterInsertRequest r = new RegisterInsertRequest();
         r.nStep       = "2";
@@ -107,21 +109,21 @@ public class RegisterInsertRequest {
                                                    String latitude,
                                                    String longitude) {
         RegisterInsertRequest r = new RegisterInsertRequest();
-        r.nStep       = "3";
-        r.nMobile     = mobile;
+        r.nStep        = "3";
+        r.nMobile      = mobile;
         r.nAddressType = addressType;
-        r.nPincode    = pincode;
-        r.cPincode    = pincode;
-        r.cAddress    = address;
-        r.nState      = stateId;
-        r.nCity       = cityId;
-        r.cLatitude   = latitude;
-        r.cLongitude  = longitude;
+        r.nPincode     = pincode;   // n_pincode
+        r.cPincode     = pincode;   // c_pincode (both sent - API whichever accepts)
+        r.cAddress     = address;
+        r.nState       = stateId;
+        r.nCity        = cityId;
+        r.cLatitude    = latitude;
+        r.cLongitude   = longitude;
         return r;
     }
 
-    // ── Getters (optional, for debugging) ────────────────────────────────────
-    public String getNStep() { return nStep; }
+    // ── Getters ───────────────────────────────────────────────────────────────
+    public String getNStep()   { return nStep; }
     public String getNMobile() { return nMobile; }
-    public String getCName() { return cName; }
+    public String getCName()   { return cName; }
 }

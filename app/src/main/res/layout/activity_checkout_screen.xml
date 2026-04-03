@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F2F2F2">
+    android:background="@color/white">
 
     <!-- ── Red Toolbar ── -->
     <LinearLayout
@@ -70,6 +70,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:background="@color/white"
             android:padding="12dp">
 
             <!-- ── Deliver To Row ── -->
@@ -149,6 +150,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 app:cardCornerRadius="8dp"
+                android:backgroundTint="@color/white"
                 app:cardElevation="2dp"
                 xmlns:app="http://schemas.android.com/apk/res-auto">
 
@@ -359,6 +361,7 @@
                 android:layout_marginBottom="8dp"
                 app:cardCornerRadius="8dp"
                 app:cardElevation="2dp"
+                android:backgroundTint="@color/white"
                 xmlns:app="http://schemas.android.com/apk/res-auto">
 
                 <LinearLayout

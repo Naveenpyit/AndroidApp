@@ -499,6 +499,144 @@ resposne
         }
     }
 }
+1.cart add
+url : https://www.tomhiddleb2b.com/api/add-cart
+request : {"n_category":"1","n_pack":"2","n_product":"1","n_qty":"0","n_user":"10"}
+
+2.list cart
+url : https://www.tomhiddleb2b.com/api/list-cart
+request
+{
+    "n_user":"10"
+}
+response
+{
+    "n_status": 1,
+    "c_message": "Cart Data Found",
+    "j_data": [
+        {
+            "n_id": "229",
+            "user_id": "10",
+            "n_category": "1",
+            "n_product": "3",
+            "n_pack": "2",
+            "n_mrp": "2796.00",
+            "category_name": "MEN",
+            "n_price": "822.00",
+            "n_quantity": "2",
+            "n_total": "1644.00",
+            "c_random": "Egvm5RZ6QJ2Y",
+            "c_item_name": "TOM HIDDLE BACK PRINT TSHIRT",
+            "n_gst": "5.00",
+            "dt_created": "2026-03-06 19:45:56",
+            "c_item_code": "A4-BP-0022-M-2XL",
+            "c_pack_name": "M-2XL",
+            "c_image": "https://qritechpark.com/tomhiddle/images/BP-0022/1.webp",
+            "n_gst_value": "41.10"
+        }
+    ]
+}
+
+3.delete cart
+url : https://www.tomhiddleb2b.com/api/delete-cart
+request : {"n_cart":"106","n_user":"10"}
+
+4.update cart
+url : https://www.tomhiddleb2b.com/api/update-cart
+request
+{
+    "n_user":"4",
+    "n_cart":"15",
+    "n_product":"5",
+    "n_pack":"1",
+    "n_qty":"2"
+}
+
+5.filter api
+url : https://www.tomhiddleb2b.com/api/items-filters
+request
+{
+    "n_category":"1", // if category fiter
+    "n_user":"1"
+}
+response
+{
+    "n_status": 1,
+    "c_message": "Data Found",
+    "j_data": {
+        "j_headings": [
+            "Category",
+            "Section",
+            "Packs",
+            "Fit",
+            "Price",
+            "Tags"
+        ],
+        "j_category_filter": [
+            {
+                "n_id": "1",
+                "n_parent": null,
+                "c_name": "MEN",
+                "c_short_name": "men",
+                "product_count": "245"
+            },
+            {
+                "n_id": "7",
+                "n_parent": null,
+                "c_name": "WOMEN",
+                "c_short_name": "women",
+                "product_count": "20"
+            }
+        ],
+        "j_fit_filter": [
+            {
+                "id": "164",
+                "c_fit": "OVERSIZED",
+                "fit_count": "101"
+            },
+            {
+                "id": "1",
+                "c_fit": "SLIM",
+                "fit_count": "164"
+            }
+        ],
+        "j_price_filter": [
+            {
+                "c_price_range": "Below ₹500",
+                "n_value": "0-499"
+            },
+            {
+                "c_price_range": "₹500 - ₹999",
+                "n_value": "500-999"
+            },
+            {
+                "c_price_range": "₹1000 - ₹1499",
+                "n_value": "1000-1499"
+            },
+            {
+                "c_price_range": "₹1500 - ₹1999",
+                "n_value": "1500-1999"
+            },
+            {
+                "c_price_range": "₹2000 & Above",
+                "n_value": "2000-9999"
+            }
+        ],
+        "j_tags_filter": [
+            {
+                "c_tag": "GRAPHIC TSHIRT",
+                "n_id": "1"
+            }
+        ],
+        "j_section_filter": [],
+        "j_packs_filter": []
+    }
+}
+
+n_process_type = 1 => succefully registerd -> go to dashboard
+    n_process_type = 2 => GST or Pan Verification Onprocess -> show popup
+    n_process_type = 3 => not yet registered -> go to registeration
+
 
 2.reg create api
 url : https://www.tomhiddleb2b.com/api/register-insert
@@ -752,7 +890,7 @@ repseonse
         row.setOnClickListener(clickListener);
     }
 
-    // ── Share App ─────────────────────────────────────────────────────────────
+
 
     private void shareApp() {
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
@@ -762,7 +900,7 @@ repseonse
         startActivity(Intent.createChooser(shareIntent, "Share app via"));
     }
 
-    // ── Logout ────────────────────────────────────────────────────────────────
+
 
     private void logout() {
         tokenManager.clear();
@@ -772,32 +910,22 @@ repseonse
         finish();
     }
 
-    // ── Bottom Nav ────────────────────────────────────────────────────────────
+
+
 
     private void setupBottomNav() {
-        // Mark Account tab as selected
-        bottomNav.setSelectedItemId(R.id.nav_account);
-
-        bottomNav.setOnItemSelectedListener(item -> {
+        BottomNavigationView nav = findViewById(R.id.bottom_nav);
+        nav.setSelectedItemId(R.id.nav_cart);
+        nav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
-            if (id == R.id.nav_home) {
-                startActivity(new Intent(this, MainActivity.class));
-                finish();
-                return true;
-            } else if (id == R.id.nav_orders) {
-                startActivity(new Intent(this, ProductListingScreen.class));
-                return true;
-            } else if (id == R.id.nav_cart) {
-                startActivity(new Intent(this, CartScreen.class));
-                return true;
-            } else if (id == R.id.nav_account) {
-                return true; // already here
-            }
+            if (id == R.id.nav_account)    return true;
+            if (id == R.id.nav_home)  { startActivity(new Intent(this, MainActivity.class));  return true; }
+            if (id == R.id.nav_orders)    { startActivity(new Intent(this, ProductListingScreen.class));     return true; }
+            if (id == R.id.nav_cart) { startActivity(new Intent(this, CartScreen.class));  return true; }
             return false;
         });
     }
 
-    // ── Status Bar ────────────────────────────────────────────────────────────
 
     private void setupStatusBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {

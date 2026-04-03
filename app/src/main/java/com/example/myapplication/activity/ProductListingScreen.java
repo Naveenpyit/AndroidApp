@@ -238,17 +238,11 @@ public class ProductListingScreen extends AppCompatActivity
         InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         if (imm != null) imm.hideSoftInputFromWindow(etSearch.getWindowToken(), 0);
     }
-
-    // ─── Badge helpers ───────────────────────────────────────────────────────
-
-    /** Called by adapter when wishlist add/remove succeeds. */
     @Override
     public void onWishlistCountChanged(int delta) {
         wishlistCount = Math.max(0, wishlistCount + delta);
         updateWishlistBadge();
     }
-
-    /** Called by adapter when cart qty changes. */
     @Override
     public void onCartCountChanged(int delta) {
         cartCount = Math.max(0, cartCount + delta);
@@ -267,13 +261,17 @@ public class ProductListingScreen extends AppCompatActivity
         tvCartCount.setVisibility(cartCount > 0 ? View.VISIBLE : View.GONE);
     }
 
-    // ─── RecyclerView ────────────────────────────────────────────────────────
 
     private void setupRecycler() {
         GridLayoutManager lm = new GridLayoutManager(this, 2);
         rvProducts.setLayoutManager(lm);
-        productAdapter = new ProductListingAdapter(this, productList);
-        productAdapter.setBadgeListener(this);   // ← wire up badge callbacks
+
+
+        com.example.myapplication.utils.TokenManager tokenManager =
+                new com.example.myapplication.utils.TokenManager(this);
+
+        productAdapter = new ProductListingAdapter(this, productList, tokenManager); // ✅ 3 args
+        productAdapter.setBadgeListener(this);
         rvProducts.setAdapter(productAdapter);
 
         rvProducts.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -291,9 +289,6 @@ public class ProductListingScreen extends AppCompatActivity
             }
         });
     }
-
-    // ─── Chips ───────────────────────────────────────────────────────────────
-
     private void setupChips() {
         chipCategory.setOnClickListener(v -> showFilterDialog("Category", convertCategory(), "category", tvChipCategory, "Category"));
         chipPrice   .setOnClickListener(v -> showFilterDialog("Price",    convertPrice(),    "price",    tvChipPrice,    "Price"));
@@ -303,7 +298,7 @@ public class ProductListingScreen extends AppCompatActivity
         chipPack    .setOnClickListener(v -> showFilterDialogNoLabel("Pack",    convertPack(),    "pack"));
     }
 
-    // ─── Convert filter data ──────────────────────────────────────────────────
+
 
     private List<FilterModel.FilterOption> convertCategory() {
         List<FilterModel.FilterOption> list = new ArrayList<>();
@@ -475,8 +470,6 @@ public class ProductListingScreen extends AppCompatActivity
         }
     }
 
-    // ─── Reload ──────────────────────────────────────────────────────────────
-
     private void reloadProducts() {
         currentPage = 1;
         productList.clear();
@@ -484,7 +477,6 @@ public class ProductListingScreen extends AppCompatActivity
         fetchProducts(true);
     }
 
-    // ─── API: Filters ─────────────────────────────────────────────────────────
 
     private void fetchFilters() {
         String catParam = (categoryId != null && !categoryId.isEmpty()) ? categoryId : "";
@@ -501,7 +493,6 @@ public class ProductListingScreen extends AppCompatActivity
                 });
     }
 
-    // ─── API: Products ────────────────────────────────────────────────────────
 
     private void fetchProducts(boolean isFirstPage) {
         if (isLoading) return;
@@ -562,12 +553,12 @@ public class ProductListingScreen extends AppCompatActivity
                 ? new ArrayList<>(selectedFilters.get("tag")) : new ArrayList<>());
         filters.add(tagMap);
 
-        // ── Pass search query into the request (uses the 4th "search" param) ──
+
         ListItemsRequest request = new ListItemsRequest(
                 "10",
                 String.valueOf(currentPage),
                 String.valueOf(PAGE_LIMIT),
-                currentSearchQuery,   // ← was always "" before; now carries the query
+                currentSearchQuery,
                 filters
         );
 
@@ -633,18 +624,18 @@ public class ProductListingScreen extends AppCompatActivity
     // ─── Bottom Nav ───────────────────────────────────────────────────────────
 
     private void setupBottomNav() {
-        bottomNav = findViewById(R.id.bottom_nav);
-        bottomNav.setOnItemSelectedListener(item -> {
-            if (item.getItemId() == R.id.nav_home) {
-                startActivity(new Intent(this, MainActivity.class));
-                return true;
-            } else if (item.getItemId() == R.id.nav_cart) {
-                startActivity(new Intent(this, CartScreen.class));
-                return true;
-            }
+        BottomNavigationView nav = findViewById(R.id.bottom_nav);
+        nav.setSelectedItemId(R.id.nav_orders);
+        nav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_orders)    return true;
+            if (id == R.id.nav_home)  { startActivity(new Intent(this, MainActivity.class));  return true; }
+            if (id == R.id.nav_cart)    { startActivity(new Intent(this, CartScreen.class));     return true; }
+            if (id == R.id.nav_account) { startActivity(new Intent(this, AccountScreen.class));  return true; }
             return false;
         });
     }
+
 
     private void setupStatusBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

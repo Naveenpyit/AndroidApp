@@ -184,8 +184,10 @@
                 android:background="@drawable/bg_spinner"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
-                android:layout_marginBottom="16dp" />
-
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="4dp" />
             <!-- Address Line -->
             <TextView
                 android:layout_width="match_parent"
@@ -268,7 +270,11 @@
                         android:layout_height="48dp"
                         android:background="@drawable/bg_spinner"
                         android:paddingStart="12dp"
-                        android:paddingEnd="12dp" />
+                        android:paddingEnd="12dp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="4dp" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -295,13 +301,18 @@
                         android:textStyle="bold"
                         android:layout_marginBottom="6dp" />
 
+                    <!-- spinner_state, spinner_city, spinner_country, spinner_address_type எல்லாத்துக்கும் -->
                     <Spinner
                         android:id="@+id/spinner_state"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:background="@drawable/bg_spinner"
                         android:paddingStart="12dp"
-                        android:paddingEnd="12dp" />
+                        android:paddingEnd="12dp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="4dp" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -325,7 +336,11 @@
                         android:layout_height="48dp"
                         android:background="@drawable/bg_spinner"
                         android:paddingStart="12dp"
-                        android:paddingEnd="12dp" />
+                        android:paddingEnd="12dp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="4dp" />
                 </LinearLayout>
             </LinearLayout>
 

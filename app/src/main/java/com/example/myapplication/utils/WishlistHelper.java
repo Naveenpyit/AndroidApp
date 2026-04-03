@@ -68,17 +68,17 @@ public class WishlistHelper {
             AddWishlistRequest request =
                     new AddWishlistRequest(category, product, pack,"10");
 
-            // ✅ FIX: use CommonResponse
-            apiService.addWishlist(request).enqueue(new Callback<CommonResponse>() {
+
+            apiService.addWishlist(request).enqueue(new Callback<AddWishlistResponse>() {
 
                 @Override
-                public void onResponse(Call<CommonResponse> call, Response<CommonResponse> response) {
+                public void onResponse(Call<AddWishlistResponse> call,
+                                       Response<AddWishlistResponse> response) {
 
                     if (response.isSuccessful() && response.body() != null
-                            && response.body().getStatus() == 1) {
+                            && response.body().getNStatus() == 1) {
 
-                        // ⚠️ wishlistId usually not returned → generate temp or refetch later
-                        String newWishlistId = product; // fallback
+                        String newWishlistId = response.body().getNWishlistCount(); // use actual field
 
                         callback.onSuccess(true, newWishlistId);
 
@@ -88,7 +88,7 @@ public class WishlistHelper {
                 }
 
                 @Override
-                public void onFailure(Call<CommonResponse> call, Throwable t) {
+                public void onFailure(Call<AddWishlistResponse> call, Throwable t) {
                     callback.onFailure(t.getMessage());
                 }
             });
