@@ -42,9 +42,8 @@ public class StateListResponse {
         @SerializedName("n_id")
         private String nId;
 
-        @SerializedName("c_state_name")
+        @SerializedName("c_state")
         private String cStateName;
-
         public String getNId() {
             return nId;
         }

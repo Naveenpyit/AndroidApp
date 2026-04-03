@@ -276,15 +276,14 @@ public class CartScreen extends AppCompatActivity implements CartAdapter.CartCha
 
     // ── Bottom nav ────────────────────────────────────────────────────────────
     private void setupBottomNav() {
-        bottomNav = findViewById(R.id.bottom_nav);
-        if (bottomNav == null) return;
-        bottomNav.setSelectedItemId(R.id.nav_cart);
-        bottomNav.setOnItemSelectedListener(item -> {
+        BottomNavigationView nav = findViewById(R.id.bottom_nav);
+        nav.setSelectedItemId(R.id.nav_cart);
+        nav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_cart)    return true;
-            if (id == R.id.nav_home)    { startActivity(new Intent(this, MainActivity.class)); finish(); return true; }
-            if (id == R.id.nav_orders)  { startActivity(new Intent(this, OrdersActivity.class)); return true; }
-            if (id == R.id.nav_account) { startActivity(new Intent(this, AccountScreen.class)); return true; }
+            if (id == R.id.nav_home)  { startActivity(new Intent(this, MainActivity.class));  return true; }
+            if (id == R.id.nav_orders)    { startActivity(new Intent(this, ProductListingScreen.class));     return true; }
+            if (id == R.id.nav_account) { startActivity(new Intent(this, AccountScreen.class));  return true; }
             return false;
         });
     }

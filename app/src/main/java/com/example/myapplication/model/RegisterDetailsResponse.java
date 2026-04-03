@@ -15,10 +15,12 @@ public class RegisterDetailsResponse {
 
     // ✅ String → int safe convert
     public int getNStep() {
-        try { return Integer.parseInt(nStepStr); }
-        catch (Exception e) { return 0; }
+        try {
+            return Integer.parseInt(nStepStr);
+        } catch (Exception e) {
+            return 0;
+        }
     }
-
 
     public static class JData {
 
@@ -75,6 +77,8 @@ public class RegisterDetailsResponse {
         public String getNCity()      { return nCity; }
         public String getCLongitude() { return cLongitude; }
         public String getCLatitude()  { return cLatitude; }
+
+
     }
 
 

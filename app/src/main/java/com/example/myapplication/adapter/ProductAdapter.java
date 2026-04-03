@@ -3,7 +3,6 @@ package com.example.myapplication.adapter;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Paint;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,10 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.myapplication.R;
 import com.example.myapplication.activity.ProductDetailScreen;
-import com.example.myapplication.model.AddWishlistRequest;
-import com.example.myapplication.model.CommonResponse;
-import com.example.myapplication.model.DeleteWishlistRequest;
-import com.example.myapplication.model.ProductModel;
+import com.example.myapplication.model.*;
 import com.example.myapplication.network.ApiService;
 import com.example.myapplication.network.RetrofitClient;
 import com.example.myapplication.utils.TokenManager;
@@ -68,7 +64,6 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
 
         h.tvDiscount.setText(p.getDiscount() + "% Off");
         h.tvMoq.setText("MOQ: " + p.getMoq());
-        h.btnBuy.setText("Buy ₹" + p.getSellingPrice());
 
         // ─── IMAGE ───
         Glide.with(context)
@@ -77,23 +72,64 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
                 .error(R.drawable.arrivalimgg)
                 .into(h.ivImage);
 
-        // ─── WISHLIST STATE ───
+        // ─── WISHLIST ───
         boolean isWishlisted = wishlistManager.isWishlisted(p.getItemId());
         updateWishlistIcon(h, isWishlisted);
 
-        // ─── CLICK WISHLIST ───
         h.ivWishlist.setOnClickListener(v -> {
-
-            boolean currentState = wishlistManager.isWishlisted(p.getItemId());
-
-            if (!currentState) {
+            if (!wishlistManager.isWishlisted(p.getItemId())) {
                 addWishlist(p, h);
             } else {
                 removeWishlist(p, h);
             }
         });
 
-        // ─── CLICK ITEM → DETAIL ───
+        // ─── CART STATE ───
+        String savedQty = p.getCartQty();
+        boolean inCart = savedQty != null && !savedQty.equals("0");
+
+        if (inCart) {
+            h.btnAddToCart.setVisibility(View.GONE);
+            h.layoutQty.setVisibility(View.VISIBLE);
+            h.tvQtyCount.setText(savedQty);
+        } else {
+            h.btnAddToCart.setVisibility(View.VISIBLE);
+            h.layoutQty.setVisibility(View.GONE);
+            h.tvQtyCount.setText("1");
+        }
+
+        // ─── ADD TO CART ───
+        h.btnAddToCart.setOnClickListener(v -> {
+            h.btnAddToCart.setVisibility(View.GONE);
+            h.layoutQty.setVisibility(View.VISIBLE);
+            h.tvQtyCount.setText("1");
+
+            callAddCartApi(p, 1, h);
+        });
+
+        // ─── PLUS ───
+        h.btnPlus.setOnClickListener(v -> {
+            int qty = safeInt(h.tvQtyCount.getText().toString()) + 1;
+            h.tvQtyCount.setText(String.valueOf(qty));
+            callAddCartApi(p, qty, h);
+        });
+
+        // ─── MINUS ───
+        h.btnMinus.setOnClickListener(v -> {
+            int qty = safeInt(h.tvQtyCount.getText().toString());
+
+            if (qty > 1) {
+                qty--;
+                h.tvQtyCount.setText(String.valueOf(qty));
+                callAddCartApi(p, qty, h);
+            } else {
+                h.layoutQty.setVisibility(View.GONE);
+                h.btnAddToCart.setVisibility(View.VISIBLE);
+                callAddCartApi(p, 0, h);
+            }
+        });
+
+        // ─── ITEM CLICK ───
         h.itemView.setOnClickListener(v -> {
             Intent i = new Intent(context, ProductDetailScreen.class);
             i.putExtra("c_random", p.getRandom());
@@ -101,6 +137,9 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         });
     }
 
+    // ─────────────────────────────────────────────
+    // ADD WISHLIST
+    // ─────────────────────────────────────────────
 
     private void addWishlist(ProductModel p, ViewHolder h) {
 
@@ -120,52 +159,38 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
                 userId
         );
 
-        Log.e("API_CALL", "Add Wishlist Called");
-
-        apiService.addWishlist(request).enqueue(new Callback<CommonResponse>() {
+        apiService.addWishlist(request).enqueue(new Callback<AddWishlistResponse>() {
             @Override
-            public void onResponse(Call<CommonResponse> call, Response<CommonResponse> response) {
-
-                h.ivWishlist.setEnabled(true);
+            public void onResponse(Call<AddWishlistResponse> call,
+                                   Response<AddWishlistResponse> response) {
 
                 if (response.isSuccessful() && response.body() != null
-                        && response.body().getStatus() == 1) {
+                        && response.body().getNStatus() == 1) {
 
-                    String wishlistId = null;
+                    String tempId = response.body().getNWishlistCount();
 
-                    try {
-                        wishlistId = response.body().getWishlistId();
-                    } catch (Exception e) {
-                        wishlistId = p.getItemId();
-                    }
-
-                    if (wishlistId == null || wishlistId.isEmpty()) {
-                        wishlistId = p.getItemId();
-                    }
-
-                    wishlistManager.addWishlist(p.getItemId(), wishlistId, p.getPackId());
+                    wishlistManager.addWishlist(
+                            p.getItemId(),
+                            tempId,
+                            p.getPackId()
+                    );
 
                     updateWishlistIcon(h, true);
+                    notifyItemChanged(h.getAdapterPosition());
 
-                    int pos = h.getAdapterPosition();
-                    if (pos != RecyclerView.NO_POSITION) {
-                        notifyItemChanged(pos);
-                    }
-
-                    Toast.makeText(context, "Added to Wishlist ❤️", Toast.LENGTH_SHORT).show();
-
-                } else {
-                    Toast.makeText(context, "Failed to add wishlist", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context,
+                            "Added to Wishlist ❤️",
+                            Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onFailure(Call<CommonResponse> call, Throwable t) {
-                h.ivWishlist.setEnabled(true);
+            public void onFailure(Call<AddWishlistResponse> call, Throwable t) {
                 Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
             }
         });
     }
+
     // ─────────────────────────────────────────────
     // REMOVE WISHLIST
     // ─────────────────────────────────────────────
@@ -181,22 +206,11 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
 
         String wishlistId = wishlistManager.getWishlistId(p.getItemId());
 
-        if (wishlistId == null) {
-            wishlistManager.removeWishlist(p.getItemId());
-            updateWishlistIcon(h, false);
-            notifyItemChanged(h.getAdapterPosition());
-            return;
-        }
-
-        h.ivWishlist.setEnabled(false);
-
         DeleteWishlistRequest request = new DeleteWishlistRequest(userId, wishlistId);
 
         apiService.deleteWishlist(request).enqueue(new Callback<CommonResponse>() {
             @Override
             public void onResponse(Call<CommonResponse> call, Response<CommonResponse> response) {
-
-                h.ivWishlist.setEnabled(true);
 
                 if (response.isSuccessful() && response.body() != null
                         && response.body().getStatus() == 1) {
@@ -206,24 +220,64 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
                     updateWishlistIcon(h, false);
                     notifyItemChanged(h.getAdapterPosition());
 
-                    Toast.makeText(context, "Removed from Wishlist", Toast.LENGTH_SHORT).show();
-
-                } else {
-                    Toast.makeText(context, "Failed to remove", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context,
+                            "Removed from Wishlist",
+                            Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<CommonResponse> call, Throwable t) {
-                h.ivWishlist.setEnabled(true);
                 Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     // ─────────────────────────────────────────────
-    // ICON UPDATE
+    // CART API
     // ─────────────────────────────────────────────
+
+    private void callAddCartApi(ProductModel item, int quantity, ViewHolder h) {
+
+        String userId = tokenManager.getUserId();
+
+        AddCartRequest request = new AddCartRequest(
+                item.getCategory(),
+                item.getPackId(),
+                item.getItemId(),
+                String.valueOf(quantity),
+                userId
+        );
+
+        apiService.addCart(request).enqueue(new Callback<CommonResponse>() {
+            @Override
+            public void onResponse(Call<CommonResponse> call, Response<CommonResponse> response) {
+
+                if (response.isSuccessful() && response.body() != null
+                        && response.body().getStatus() == 1) {
+
+                    item.setCartQty(String.valueOf(quantity));
+
+                } else {
+                    Toast.makeText(context, "Cart failed", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<CommonResponse> call, Throwable t) {
+                Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // ─────────────────────────────────────────────
+    // HELPERS
+    // ─────────────────────────────────────────────
+
+    private int safeInt(String v) {
+        try { return Integer.parseInt(v); }
+        catch (Exception e) { return 1; }
+    }
 
     private void updateWishlistIcon(ViewHolder h, boolean state) {
         h.ivWishlist.setImageResource(
@@ -244,7 +298,10 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
 
         ImageView ivImage, ivWishlist;
         TextView tvName, tvSubtitle, tvPrice, tvMrp, tvDiscount, tvMoq;
-        Button btnBuy;
+
+        Button btnAddToCart;
+        LinearLayout layoutQty;
+        TextView btnMinus, btnPlus, tvQtyCount;
 
         public ViewHolder(@NonNull View v) {
             super(v);
@@ -259,7 +316,11 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
             tvDiscount = v.findViewById(R.id.tv_discount);
             tvMoq = v.findViewById(R.id.tv_moq);
 
-            btnBuy = v.findViewById(R.id.btn_buy);
+            btnAddToCart = v.findViewById(R.id.btn_add_to_cart);
+            layoutQty = v.findViewById(R.id.layout_qty);
+            btnMinus = v.findViewById(R.id.btn_minus);
+            btnPlus = v.findViewById(R.id.btn_plus);
+            tvQtyCount = v.findViewById(R.id.tv_qty_count);
         }
     }
 }

@@ -7,13 +7,11 @@
     android:layout_height="56dp"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
+    android:padding="10dp"
     android:background="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true">
 
-    <!-- Left icon in a red-tinted circle -->
     <ImageView
         android:id="@+id/iv_menu_icon"
         android:layout_width="28dp"
@@ -21,11 +19,11 @@
         android:src="@drawable/ic_person"
         android:tint="@color/red_primary" />
 
-    <!-- Title + optional subtitle -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:padding="10dp"
         android:orientation="vertical"
         android:layout_marginStart="14dp">
 
