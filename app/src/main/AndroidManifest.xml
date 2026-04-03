@@ -76,6 +76,11 @@
         <activity
             android:name=".activity.OnboadingScreen"
             android:exported="false" />
+
+<!--        <activity-->
+<!--            android:name=".PaymentActivity"-->
+<!--            android:windowSoftInputMode="adjustResize"-->
+<!--            android:exported="false"/>-->
         <activity
             android:name=".SplashScreen"
             android:exported="true"
