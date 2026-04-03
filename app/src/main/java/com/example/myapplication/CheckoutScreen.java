@@ -1,5 +1,6 @@
 package com.example.myapplication;
 
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.ImageView;
@@ -10,6 +11,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
 
+import com.example.myapplication.activity.PaymentActivity;
 import com.example.myapplication.utils.CartManager;
 
 public class CheckoutScreen extends AppCompatActivity {
@@ -36,16 +38,23 @@ public class CheckoutScreen extends AppCompatActivity {
         setupPaymentOptions();
 
         btnBack.setOnClickListener(v -> onBackPressed());
-
         btnPlaceOrder.setOnClickListener(v -> {
+
             double payNow = isPay20Selected ? grandTotal * 0.20 : grandTotal;
-            Toast.makeText(this,
-                    "Order placed! Paying ₹" + String.format("%.0f", payNow),
-                    Toast.LENGTH_LONG).show();
+
+            Intent i = new Intent(CheckoutScreen.this, PaymentActivity.class);
+
+            // 🔥 PASS AMOUNT
+            i.putExtra("amount", String.valueOf((int) payNow));
+            i.putExtra("payment_type", isPay20Selected ? "partial" : "full");
+
+            startActivity(i);
+
             CartManager.getInstance().clearCart();
             finish();
         });
     }
+
 
     private void initViews() {
         btnBack = findViewById(R.id.btn_back);

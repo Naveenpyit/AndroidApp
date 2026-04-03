@@ -13,6 +13,8 @@ import com.example.myapplication.model.FiltersRequest;
 import com.example.myapplication.model.FiltersResponse;
 import com.example.myapplication.model.HomeProductsRequest;
 import com.example.myapplication.model.HomeProductsResponse;
+import com.example.myapplication.model.JuspayInitRequest;
+import com.example.myapplication.model.JuspayInitResponse;
 import com.example.myapplication.model.ListCartRequest;
 import com.example.myapplication.model.ListCartResponse;
 import com.example.myapplication.model.ListCategoryRequest;
@@ -105,5 +107,8 @@ public interface ApiService {
     // ── Location: city list for a state ──────────────────────────────────────
     @POST("city-list")
     Call<CityListResponse> getCityList(@Body CityListRequest request);
+
+    @POST("initiateJuspayPayment")
+    Call<JuspayInitResponse> initiatePayment(@Body JuspayInitRequest request);
 }
 

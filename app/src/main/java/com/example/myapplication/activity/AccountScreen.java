@@ -741,6 +741,54 @@ repseonse
             "n_address": 1
         }
     }
+
+    url : https://www.tomhiddleb2b.com/api/initiateJuspayPayment
+{
+    "n_user":"1",
+    "n_address":"1",
+    "n_payment_type":"2"
+}
+Response:
+{
+    "n_status": 1,
+    "c_message": "Payment Gateyway initiated successfully",
+    "j_data": {
+        "status": "NEW",
+        "id": "ordeh_bf9cb9524a354a17a709726ccbe6140d",
+        "order_id": "order_sdk_697a67d0d1342",
+        "payment_links": {
+            "web": "https://smartgateway.hdfcuat.bank.in/payment-page/order/ordeh_bf9cb9524a354a17a709726ccbe6140d",
+            "expiry": "2026-01-28T20:02:30Z"
+        },
+        "sdk_payload": {
+            "requestId": "4da780e9a1524a1f855bcdaa7135a540",
+            "service": "in.juspay.hyperpay",
+            "payload": {
+                "clientId": "hdfcmaster",
+                "customerId": "order_sdk_customer697a67d0d1343",
+                "displayBusinessAs": "SWETHA TEX",
+                "orderId": "order_sdk_697a67d0d1342",
+                "returnUrl": "https://www.tomhiddleb2b.com/handleJuspayResponse",
+                "currency": "INR",
+                "customerPhone": "9999999999",
+                "service": "in.juspay.hyperpay",
+                "environment": "sandbox",
+                "merchantId": "SG2875",
+                "amount": "272.79",
+                "clientAuthTokenExpiry": "2026-01-28T20:02:30Z",
+                "clientAuthToken": "tkn_a772ddf7a8124a5db15c4c773ebd0341",
+                "action": "paymentPage",
+                "collectAvsInfo": false
+            },
+            "expiry": "2026-01-28T20:02:30Z",
+            "currTime": "2026-01-28T19:47:30Z"
+        }
+    }
+}
+
+https://smartgateway.hdfcbank.com/docs/hypercheckout-mobile-sdk/android/overview/integration-architecture
+
+{"API_KEY":"2558D381EDA4F29AAD32EA97AA6DAA","MERCHANT_ID":"SG2875","ENABLE_LOGGING":false,"PAYMENT_PAGE_CLIENT_ID":"hdfcmaster","BASE_URL":"https://smartgateway.hdfcuat.bank.in","RESPONSE_KEY":"9FE387EA4614C3EA355D9B1F35AF39"}
 }
 
 */
