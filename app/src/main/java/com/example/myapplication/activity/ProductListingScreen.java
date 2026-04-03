@@ -266,7 +266,7 @@ public class ProductListingScreen extends AppCompatActivity
         GridLayoutManager lm = new GridLayoutManager(this, 2);
         rvProducts.setLayoutManager(lm);
 
-        // ✅ TokenManager add பண்ணுங்க
+
         com.example.myapplication.utils.TokenManager tokenManager =
                 new com.example.myapplication.utils.TokenManager(this);
 
@@ -553,12 +553,12 @@ public class ProductListingScreen extends AppCompatActivity
                 ? new ArrayList<>(selectedFilters.get("tag")) : new ArrayList<>());
         filters.add(tagMap);
 
-        // ── Pass search query into the request (uses the 4th "search" param) ──
+
         ListItemsRequest request = new ListItemsRequest(
                 "10",
                 String.valueOf(currentPage),
                 String.valueOf(PAGE_LIMIT),
-                currentSearchQuery,   // ← was always "" before; now carries the query
+                currentSearchQuery,
                 filters
         );
 

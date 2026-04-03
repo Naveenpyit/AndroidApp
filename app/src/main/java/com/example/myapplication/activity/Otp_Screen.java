@@ -71,9 +71,7 @@ public class Otp_Screen extends AppCompatActivity {
         });
     }
 
-    // ─────────────────────────────────────────────
-    // Step 1: Verify OTP
-    // ─────────────────────────────────────────────
+
 
     private void verifyOtp(String mobile, String otp) {
         apiService.verifyOtp(new VerifyOtpRequest(mobile, otp))
@@ -128,18 +126,16 @@ public class Otp_Screen extends AppCompatActivity {
                         switch (processType) {
 
                             case 1:
-                                // ✅ Successfully registered → Dashboard
+
                                 goToMain();
                                 break;
 
                             case 2:
-                                // ✅ GST/PAN verification pending → Popup
                                 showVerificationPendingAlert();
                                 break;
 
                             case 3:
                             default:
-                                // ✅ Not registered → fetch details → route
                                 showLoader("Loading...");
                                 fetchRegisterDetails();
                                 break;

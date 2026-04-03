@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="#F7F7F7">
 
-    <!-- ── Top AppBar ───────────────────────────────────────────────────────── -->
+
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/app_bar"
         android:layout_width="match_parent"
@@ -30,7 +30,7 @@
                 android:src="@drawable/ic_arrow_back"
                 android:tint="@color/white" />
 
-            <!-- Search bar -->
+
             <LinearLayout
                 android:id="@+id/search_bar_click"
                 android:layout_width="0dp"
@@ -60,7 +60,7 @@
                     android:textSize="13sp" />
             </LinearLayout>
 
-            <!-- Notification -->
+
             <ImageView
                 android:id="@+id/btn_notification"
                 android:layout_width="36dp"
@@ -139,7 +139,7 @@
                 </LinearLayout>
             </FrameLayout>
 
-            <!-- ── Color / Pack / Qty / SKU Block ── -->
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -899,8 +899,48 @@
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+    <LinearLayout
+        android:id="@+id/layout_qty"
+        android:layout_width="match_parent"
+        android:layout_height="38dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@drawable/bg_button_red"
+        android:visibility="gone"
+        android:layout_marginTop="8dp">
 
-    <!-- ── Bottom Buttons (fixed) ── -->
+        <TextView
+            android:id="@+id/tv_btn_minus"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:text="-"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:gravity="center"/>
+
+        <TextView
+            android:id="@+id/tv_qty_count"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="1"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"/>
+
+        <TextView
+            android:id="@+id/tv_btn_plus"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:text="+"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:gravity="center"/>
+    </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

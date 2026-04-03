@@ -68,7 +68,7 @@ public class CartScreen extends AppCompatActivity implements CartAdapter.CartCha
 
         TokenManager tokenManager = new TokenManager(this);
         userId = tokenManager.getUserId();
-        if (userId == null || userId.isEmpty()) userId = "10"; // fallback
+      //  if (userId == null || userId.isEmpty()) userId = "10"; // fallback
 
         loadCart();
     }

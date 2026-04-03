@@ -117,9 +117,9 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 .into(h.ivImage);
 
         // ── Wishlist state ────────────────────────────────────────────────────
-        boolean isWishlisted = wishlistManager.isWishlisted(p.getItemId());
+        boolean isWishlisted = wishlistManager.isWishlisted(p.getId());
         p.setWishlisted(isWishlisted);
-        p.setWishlistId(wishlistManager.getWishlistId(p.getItemId()));
+        p.setWishlistId(wishlistManager.getWishlistId(p.getId()));
         updateWishlistIcon(h, isWishlisted);
 
         // ── Cart state ────────────────────────────────────────────────────────
@@ -172,22 +172,21 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             }
         });
 
-        // ── Item click ────────────────────────────────────────────────────────
+
         h.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, ProductDetailScreen.class);
             intent.putExtra("c_random", p.getRandom());
             context.startActivity(intent);
         });
 
-        // ── Wishlist toggle ───────────────────────────────────────────────────
+
         h.ivWishlist.setOnClickListener(v -> {
             int pos = h.getAdapterPosition();
             if (pos == RecyclerView.NO_POSITION) return;
             ProductModel item = list.get(pos);
 
-            // ✅ Use ACTUAL product fields — NOT hardcoded values
             String category = item.getCategory();   // n_category from API e.g. "1"
-            String product  = item.getItemId();      // id from API e.g. "6"
+            String product  = item.getId();      // id from API e.g. "6"
             String pack     = item.getPackId();      // n_pack_id from API e.g. "5"
             String userId = tokenManager.getUserId();
             Log.d(TAG, "Wishlist click → category=" + category
@@ -209,7 +208,7 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         });
     }
 
-    // ── Wishlist: Add ─────────────────────────────────────────────────────────
+
 
     private void addToWishlist(String category, String product, String pack,
                                String userId, ProductModel item, ProductViewHolder holder) {
@@ -241,17 +240,13 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                     return;
                 }
 
-                // ✅ API returns n_wishlist_count as the NEW total count,
-                //    NOT the individual wishlist ID. We store productId→packId
-                //    and use list-wishlist to get the real n_id later.
-                //    For now store n_wishlist_count as a reference key.
                 String wishlistCount = body.getNWishlistCount(); // e.g. "3"
 
                 item.setWishlisted(true);
-                item.setWishlistId(wishlistCount); // temporary; overwritten after list call
+                item.setWishlistId(wishlistCount);
 
-                // ✅ Store productId + packId so WishlistScreen can use them for add-to-cart
-                wishlistManager.addWishlist(item.getItemId(), wishlistCount, item.getPackId());
+
+                wishlistManager.addWishlist(item.getId(), wishlistCount, item.getPackId());
 
                 updateWishlistIcon(holder, true);
 
@@ -259,7 +254,7 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
                 Toast.makeText(context, "Added to Wishlist ❤️", Toast.LENGTH_SHORT).show();
 
-                // ✅ Fetch actual n_id from list API and update WishlistManager
+
                 fetchAndStoreWishlistId(item, userId);
             }
 
@@ -271,10 +266,7 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         });
     }
 
-    /**
-     * After adding, call list-wishlist to get the real n_id for this product.
-     * This n_id is what delete-wishlist needs as "n_wishlist".
-     */
+
     private void fetchAndStoreWishlistId(ProductModel item, String userId) {
         com.example.myapplication.model.ListWishlistRequest req =
                 new com.example.myapplication.model.ListWishlistRequest(userId);
@@ -292,14 +284,14 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                         for (com.example.myapplication.model.ListWishlistResponse.WishlistItem w
                                 : response.body().getJData()) {
 
-                            if (item.getItemId().equals(w.getNProduct())) {
+                            if (item.getId().equals(w.getNProduct())) {
                                 // ✅ n_id is what delete-wishlist needs
                                 String realWishlistId = w.getNId();
                                 item.setWishlistId(realWishlistId);
                                 wishlistManager.addWishlist(
-                                        item.getItemId(), realWishlistId, item.getPackId());
+                                        item.getId(), realWishlistId, item.getPackId());
                                 Log.d(TAG, "Stored real wishlistId=" + realWishlistId
-                                        + " for product=" + item.getItemId());
+                                        + " for product=" + item.getId());
                                 break;
                             }
                         }
@@ -313,14 +305,14 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 });
     }
 
-    // ── Wishlist: Remove ──────────────────────────────────────────────────────
+
 
     private void removeFromWishlist(ProductModel item, ProductViewHolder holder) {
         String userId = tokenManager.getUserId();
-        String wishlistId = wishlistManager.getWishlistId(item.getItemId());
+        String wishlistId = wishlistManager.getWishlistId(item.getId());
 
         Log.d(TAG, "removeFromWishlist → wishlistId=" + wishlistId
-                + " product=" + item.getItemId());
+                + " product=" + item.getId());
 
         if (isEmpty(wishlistId)) {
             Toast.makeText(context, "Cannot remove: ID not found", Toast.LENGTH_SHORT).show();
@@ -337,7 +329,7 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
                     item.setWishlisted(false);
                     item.setWishlistId(null);
-                    wishlistManager.removeWishlist(item.getItemId());
+                    wishlistManager.removeWishlist(item.getId());
                     updateWishlistIcon(holder, false);
 
                     if (badgeListener != null) badgeListener.onWishlistCountChanged(-1);
@@ -361,13 +353,13 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 : R.drawable.ic_favorite_border);
     }
 
-    // ── Cart API ──────────────────────────────────────────────────────────────
+
 
     private void callAddCartApi(ProductModel item, int quantity,
                                 ProductViewHolder holder, int cartDelta) {
         String category = item.getCategory();
         String packId   = item.getPackId();
-        String itemId   = item.getItemId();
+        String itemId   = item.getId();
 
         if (isEmpty(category)) { showMissingToast("category", holder, item); return; }
         if (isEmpty(packId))   { showMissingToast("pack ID",  holder, item); return; }
@@ -376,7 +368,7 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         final int deltaToFire = (cartDelta == 0 && quantity == 1) ? +1 : cartDelta;
 
         AddCartRequest request = new AddCartRequest(
-                category, packId, itemId, String.valueOf(quantity), "10");
+                category, packId, itemId, String.valueOf(quantity),"28");
 
         apiService.addCart(request).enqueue(new Callback<CommonResponse>() {
             @Override
@@ -410,7 +402,7 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         });
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+
 
     private void showMissingToast(String field, ProductViewHolder h, ProductModel item) {
         Toast.makeText(context, "Missing: " + field, Toast.LENGTH_LONG).show();
@@ -432,7 +424,7 @@ public class ProductListingAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         try { return Integer.parseInt(v.trim()); } catch (Exception e) { return 1; }
     }
 
-    // ── ViewHolders ───────────────────────────────────────────────────────────
+
 
     static class ProductViewHolder extends RecyclerView.ViewHolder {
         ImageView    ivImage, ivWishlist;
