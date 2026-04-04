@@ -785,7 +785,72 @@ Response:
         }
     }
 }
+1.list orders
+url : https://www.tomhiddleb2b.com/api/list-order
+request
+{
+    "n_user":"1"
+}
 
+2. order details
+url : https://www.tomhiddleb2b.com/api/detail-order
+{
+    "n_user":"4",
+    "n_order":"4"
+}
+
+3.add address
+url : https://www.tomhiddleb2b.com/api/add-address
+request
+{
+    "c_firstname":"Naresh Kumar",
+    "c_lastname":"P",
+    "c_companyname":"",
+    "n_stateid":"29",
+    "n_cityid":"128",
+    "n_pincode":"641652",
+    "n_mobile":"9597676868",
+    "c_email":"naresh@gmail.com",
+    "c_latitude":"11.38943289432",
+    "c_longitude":"12.9343423",
+    "n_address_type":"1",
+    "n_user":"4",
+    "c_delivery_address":"1/229 kumuran colony, Tirupur"
+}
+
+4.list address
+url : https://www.tomhiddleb2b.com/api/list-address
+request
+{
+    "n_user":"4"
+}
+
+5.delete address
+url : https://www.tomhiddleb2b.com/api/delete-address
+request
+{
+    "n_user":"4",
+    "n_address":"1"
+}
+
+6.edit address
+url : https://www.tomhiddleb2b.com/api/update-address
+request
+{
+    "n_address":"3",
+    "c_firstname":"Naresh",
+    "c_lastname":"Kumar",
+    "c_companyname":"",
+    "n_stateid":"29",
+    "n_cityid":"128",
+    "n_pincode":"641652",
+    "n_mobile":"9597676868",
+    "c_email":"naresh@gmail.com",
+    "c_latitude":"11.38943289432",
+    "c_longitude":"12.9343423",
+    "n_user":"4",
+    "c_delivery_address":"1/229 kumuran colony, Tirupur"
+}
 https://smartgateway.hdfcbank.com/docs/hypercheckout-mobile-sdk/android/overview/integration-architecture
 
 {"API_KEY":"2558D381EDA4F29AAD32EA97AA6DAA","MERCHANT_ID":"SG2875","ENABLE_LOGGING":false,"PAYMENT_PAGE_CLIENT_ID":"hdfcmaster","BASE_URL":"https://smartgateway.hdfcuat.bank.in","RESPONSE_KEY":"9FE387EA4614C3EA355D9B1F35AF39"}
