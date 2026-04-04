@@ -31,24 +31,28 @@ import java.util.*;
 
 import retrofit2.*;
 
-public class DeliveryAddressActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class DeliveryAddressActivity extends AppCompatActivity
+        implements OnMapReadyCallback {
 
-    private static final String TAG = "DeliveryAddressActivity";
-    private static final int LOCATION_PERMISSION_REQ = 1001;
+    private static final String TAG                  = "DeliveryAddressActivity";
+    private static final int    LOCATION_PERMISSION_REQ = 1001;
 
+    // ── Views ──────────────────────────────────────────────────────────────────
     private Spinner        spinnerState, spinnerCity, spinnerCountry, spinnerAddressType;
     private EditText       etAddressLine, etPinCode;
     private TextView       tvCurrentLocation;
     private MaterialButton btnUseLocation, btnContinue;
 
+    // ── Map & Location ─────────────────────────────────────────────────────────
     private GoogleMap                   googleMap;
     private FusedLocationProviderClient fusedLocationClient;
-
     private double lat = 0.0, lng = 0.0;
 
+    // ── API ────────────────────────────────────────────────────────────────────
     private ApiService     apiService;
     private ProgressDialog dialog;
 
+    // ── Spinner data ───────────────────────────────────────────────────────────
     private List<StateListResponse.StateData> stateList = new ArrayList<>();
     private List<CityListResponse.CityData>   cityList  = new ArrayList<>();
 
@@ -56,29 +60,31 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
     private String selectedCityId  = "";
     private String pendingCity     = null;
 
-    // prefill
+    // ── Prefill values ─────────────────────────────────────────────────────────
     private String mobileNumber    = "";
     private String prefillStateId  = "";
     private String prefillCityId   = "";
     private String prefillAddrType = "";
 
+    // ══════════════════════════════════════════════════════════════════════════
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_delivery_address);
 
+        setupStatusBar();
         initViews();
+
         apiService          = RetrofitClient.getClient(this);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        setupStatusBar();
         setupLoader();
-        setupMap();
-        setupClick();
         setupAddressTypeSpinner();
         setupCountrySpinner();
+        setupMap();
+        setupClick();
 
-        // ── Intent extras ─────────────────────────────────────────────────────
+        // ── Read intent extras ─────────────────────────────────────────────────
         mobileNumber    = safe(getIntent().getStringExtra("mobileNumber"));
         prefillStateId  = safe(getIntent().getStringExtra("prefillStateId"));
         prefillCityId   = safe(getIntent().getStringExtra("prefillCityId"));
@@ -89,11 +95,14 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
         String prefillLat     = safe(getIntent().getStringExtra("prefillLat"));
         String prefillLng     = safe(getIntent().getStringExtra("prefillLng"));
 
+        // ── Apply prefill ──────────────────────────────────────────────────────
         if (!prefillAddress.isEmpty()) {
             etAddressLine.setText(prefillAddress);
             tvCurrentLocation.setText(prefillAddress);
         }
-        if (!prefillPin.isEmpty()) etPinCode.setText(prefillPin);
+
+        if (!prefillPin.isEmpty())
+            etPinCode.setText(prefillPin);
 
         if (!prefillLat.isEmpty() && !prefillLng.isEmpty()) {
             try {
@@ -102,7 +111,7 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
             } catch (NumberFormatException ignored) {}
         }
 
-        // Prefill address type (1=Home, 2=Office, 3=Other → index 0,1,2)
+        // Address type prefill (1=Home→idx0, 2=Office→idx1, 3=Other→idx2)
         if (!prefillAddrType.isEmpty()) {
             try {
                 int idx = Integer.parseInt(prefillAddrType) - 1;
@@ -111,21 +120,13 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
             } catch (NumberFormatException ignored) {}
         }
 
+        // ── Fetch state list (city will follow) ────────────────────────────────
         fetchStateList();
     }
 
-    // ================= STATUS BAR =================
-
-    private void setupStatusBar() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setStatusBarColor(
-                    getResources().getColor(R.color.red_primary));
-            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
-                    .setAppearanceLightStatusBars(false);
-        }
-    }
-
-    // ================= INIT =================
+    // ─────────────────────────────────────────────
+    // Init Views
+    // ─────────────────────────────────────────────
 
     private void initViews() {
         spinnerState       = findViewById(R.id.spinner_state);
@@ -139,18 +140,28 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
         btnContinue        = findViewById(R.id.btn_continue);
     }
 
+    // ─────────────────────────────────────────────
+    // Loader
+    // ─────────────────────────────────────────────
+
     private void setupLoader() {
         dialog = new ProgressDialog(this);
         dialog.setMessage("Loading...");
         dialog.setCancelable(false);
     }
 
+    // ─────────────────────────────────────────────
+    // Click
+    // ─────────────────────────────────────────────
+
     private void setupClick() {
         btnUseLocation.setOnClickListener(v -> requestLocation());
         btnContinue.setOnClickListener(v -> saveData());
     }
 
-    // ================= ADDRESS TYPE =================
+    // ─────────────────────────────────────────────
+    // Address Type Spinner
+    // ─────────────────────────────────────────────
 
     private void setupAddressTypeSpinner() {
         List<String> types = Arrays.asList("Home", "Office", "Other");
@@ -161,7 +172,9 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
         spinnerAddressType.setSelection(0);
     }
 
-    // ================= COUNTRY =================
+    // ─────────────────────────────────────────────
+    // Country Spinner
+    // ─────────────────────────────────────────────
 
     private void setupCountrySpinner() {
         List<String> countries = new ArrayList<>();
@@ -176,7 +189,9 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
         setSpinnerByText(spinnerCountry, "India");
     }
 
-    // ================= MAP =================
+    // ─────────────────────────────────────────────
+    // Map Setup
+    // ─────────────────────────────────────────────
 
     private void setupMap() {
         SupportMapFragment mapFragment =
@@ -197,15 +212,20 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
             googleMap.setMyLocationEnabled(true);
         }
 
-        // Show prefill marker if lat/lng available
+        // ✅ Show prefill marker if lat/lng available
         if (lat != 0.0 && lng != 0.0) {
             LatLng latLng = new LatLng(lat, lng);
-            googleMap.addMarker(new MarkerOptions().position(latLng));
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+            googleMap.addMarker(new MarkerOptions()
+                    .position(latLng)
+                    .title("Saved Location"));
+            googleMap.moveCamera(
+                    CameraUpdateFactory.newLatLngZoom(latLng, 15));
         } else {
+            // Default India view
             googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
                     new LatLng(20.5937, 78.9629), 5));
-            // Auto-fetch location if permission granted
+
+            // Auto fetch if permission granted
             if (ActivityCompat.checkSelfPermission(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
@@ -213,18 +233,23 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
             }
         }
 
+        // ✅ Map tap → update marker + reverse geocode
         googleMap.setOnMapClickListener(latLng -> {
             lat = latLng.latitude;
             lng = latLng.longitude;
             googleMap.clear();
-            try { googleMap.setMyLocationEnabled(true); } catch (Exception ignored) {}
+            try { googleMap.setMyLocationEnabled(true); }
+            catch (Exception ignored) {}
             googleMap.addMarker(new MarkerOptions().position(latLng));
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
+            googleMap.animateCamera(
+                    CameraUpdateFactory.newLatLngZoom(latLng, 16));
             reverseGeocode(lat, lng);
         });
     }
 
-    // ================= LOCATION =================
+    // ─────────────────────────────────────────────
+    // Location
+    // ─────────────────────────────────────────────
 
     private void requestLocation() {
         if (ActivityCompat.checkSelfPermission(this,
@@ -236,7 +261,8 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
             return;
         }
 
-        try { googleMap.setMyLocationEnabled(true); } catch (Exception ignored) {}
+        try { googleMap.setMyLocationEnabled(true); }
+        catch (Exception ignored) {}
         tvCurrentLocation.setText("Fetching location...");
 
         fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
@@ -273,9 +299,24 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
         lng = location.getLongitude();
         LatLng latLng = new LatLng(lat, lng);
         googleMap.clear();
-        try { googleMap.setMyLocationEnabled(true); } catch (Exception ignored) {}
-        googleMap.addMarker(new MarkerOptions().position(latLng).title("Your Location"));
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
+        try {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
+            googleMap.setMyLocationEnabled(true); }
+        catch (Exception ignored) {}
+        googleMap.addMarker(new MarkerOptions()
+                .position(latLng)
+                .title("Your Location"));
+        googleMap.animateCamera(
+                CameraUpdateFactory.newLatLngZoom(latLng, 16));
         reverseGeocode(lat, lng);
     }
 
@@ -283,7 +324,8 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        super.onRequestPermissionsResult(
+                requestCode, permissions, grantResults);
         if (requestCode == LOCATION_PERMISSION_REQ
                 && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -291,7 +333,9 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
         }
     }
 
-    // ================= GEOCODER =================
+    // ─────────────────────────────────────────────
+    // Reverse Geocode
+    // ─────────────────────────────────────────────
 
     private void reverseGeocode(double lat, double lng) {
         new Thread(() -> {
@@ -300,13 +344,12 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
                 List<Address> list = geocoder.getFromLocation(lat, lng, 1);
 
                 if (list != null && !list.isEmpty()) {
-                    Address a = list.get(0);
-
-                    String address = a.getAddressLine(0);
-                    String city    = a.getLocality();
-                    String state   = a.getAdminArea();
-                    String pin     = a.getPostalCode();
-                    String country = a.getCountryName();
+                    Address a       = list.get(0);
+                    String address  = a.getAddressLine(0);
+                    String city     = a.getLocality();
+                    String state    = a.getAdminArea();
+                    String pin      = a.getPostalCode();
+                    String country  = a.getCountryName();
 
                     runOnUiThread(() -> {
                         tvCurrentLocation.setText("Location fetched successfully");
@@ -314,74 +357,81 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
                                 tvCurrentLocation.setText(address), 1000);
 
                         etAddressLine.setText(address);
-                        if (pin != null) etPinCode.setText(pin);
-                        if (country != null) setSpinnerByText(spinnerCountry, country);
-                        setSpinnerByText(spinnerState, state);
+                        if (pin     != null) etPinCode.setText(pin);
+                        if (country != null)
+                            setSpinnerByText(spinnerCountry, country);
+                        if (state   != null)
+                            setSpinnerByText(spinnerState, state);
                         pendingCity = city;
                     });
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Geocoder error: " + e.getMessage());
             }
         }).start();
     }
 
-    // ================= STATE API =================
+    // ─────────────────────────────────────────────
+    // State API
+    // ─────────────────────────────────────────────
 
     private void fetchStateList() {
         dialog.show();
 
         apiService.getStateList().enqueue(new Callback<StateListResponse>() {
+
             @Override
             public void onResponse(Call<StateListResponse> call,
                                    Response<StateListResponse> response) {
                 dialog.dismiss();
 
-                if (response.isSuccessful() && response.body() != null
-                        && response.body().getNStatus() == 1) {
+                if (!response.isSuccessful() || response.body() == null
+                        || response.body().getNStatus() != 1) {
+                    Log.e(TAG, "State API failed");
+                    return;
+                }
 
-                    stateList = response.body().getJData();
+                stateList = response.body().getJData();
 
-                    // Remove nulls
-                    Iterator<StateListResponse.StateData> it = stateList.iterator();
-                    while (it.hasNext()) {
-                        if (it.next().getCStateName() == null) it.remove();
-                    }
+                // Remove nulls
+                Iterator<StateListResponse.StateData> it = stateList.iterator();
+                while (it.hasNext()) {
+                    if (it.next().getCStateName() == null) it.remove();
+                }
 
-                    ArrayAdapter<StateListResponse.StateData> adapter =
-                            new ArrayAdapter<>(DeliveryAddressActivity.this,
-                                    R.layout.spinner_item, stateList);
-                    adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
-                    spinnerState.setAdapter(adapter);
+                ArrayAdapter<StateListResponse.StateData> adapter =
+                        new ArrayAdapter<>(DeliveryAddressActivity.this,
+                                R.layout.spinner_item, stateList);
+                adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
+                spinnerState.setAdapter(adapter);
 
-                    // ✅ Prefill state by ID
-                    if (!prefillStateId.isEmpty()) {
-                        for (int i = 0; i < stateList.size(); i++) {
-                            if (stateList.get(i).getNId().equals(prefillStateId)) {
-                                spinnerState.setSelection(i);
-                                selectedStateId = prefillStateId;
-                                break;
-                            }
+                // ✅ Prefill state by ID
+                if (!prefillStateId.isEmpty()) {
+                    for (int i = 0; i < stateList.size(); i++) {
+                        if (stateList.get(i).getNId().equals(prefillStateId)) {
+                            spinnerState.setSelection(i);
+                            selectedStateId = prefillStateId;
+                            break;
                         }
                     }
-
-                    spinnerState.setOnItemSelectedListener(
-                            new AdapterView.OnItemSelectedListener() {
-                                @Override
-                                public void onItemSelected(AdapterView<?> parent,
-                                                           android.view.View view,
-                                                           int pos, long id) {
-                                    selectedStateId = stateList.get(pos).getNId();
-                                    // Pass prefillCityId first time only
-                                    String cityIdToSelect = prefillCityId;
-                                    prefillCityId = ""; // reset after first use
-                                    fetchCityList(selectedStateId, cityIdToSelect);
-                                }
-
-                                @Override
-                                public void onNothingSelected(AdapterView<?> parent) {}
-                            });
                 }
+
+                spinnerState.setOnItemSelectedListener(
+                        new AdapterView.OnItemSelectedListener() {
+                            @Override
+                            public void onItemSelected(AdapterView<?> parent,
+                                                       android.view.View view,
+                                                       int pos, long id) {
+                                selectedStateId = stateList.get(pos).getNId();
+                                // ✅ prefillCityId first time only
+                                String cityIdToSelect = prefillCityId;
+                                prefillCityId = ""; // reset
+                                fetchCityList(selectedStateId, cityIdToSelect);
+                            }
+
+                            @Override
+                            public void onNothingSelected(AdapterView<?> parent) {}
+                        });
             }
 
             @Override
@@ -392,75 +442,86 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
         });
     }
 
-    // ================= CITY API =================
+    // ─────────────────────────────────────────────
+    // City API
+    // ─────────────────────────────────────────────
 
     private void fetchCityList(String stateId, String selectCityId) {
         apiService.getCityList(new CityListRequest(stateId))
                 .enqueue(new Callback<CityListResponse>() {
+
                     @Override
                     public void onResponse(Call<CityListResponse> call,
                                            Response<CityListResponse> response) {
 
-                        if (response.isSuccessful() && response.body() != null) {
-                            cityList = response.body().getJData();
+                        if (!response.isSuccessful()
+                                || response.body() == null) return;
 
-                            // Remove nulls
-                            Iterator<CityListResponse.CityData> it = cityList.iterator();
-                            while (it.hasNext()) {
-                                if (it.next().getCCityName() == null) it.remove();
-                            }
+                        cityList = response.body().getJData();
 
-                            ArrayAdapter<CityListResponse.CityData> adapter =
-                                    new ArrayAdapter<>(DeliveryAddressActivity.this,
-                                            R.layout.spinner_item, cityList);
-                            adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
-                            spinnerCity.setAdapter(adapter);
-
-                            // ✅ Prefill city by ID
-                            if (selectCityId != null && !selectCityId.isEmpty()) {
-                                for (int i = 0; i < cityList.size(); i++) {
-                                    if (cityList.get(i).getNId().equals(selectCityId)) {
-                                        spinnerCity.setSelection(i);
-                                        selectedCityId = selectCityId;
-                                        break;
-                                    }
-                                }
-                            } else if (pendingCity != null) {
-                                setSpinnerByText(spinnerCity, pendingCity);
-                                pendingCity = null;
-                            }
-
-                            // Track selected city
-                            spinnerCity.setOnItemSelectedListener(
-                                    new AdapterView.OnItemSelectedListener() {
-                                        @Override
-                                        public void onItemSelected(AdapterView<?> parent,
-                                                                   android.view.View view,
-                                                                   int pos, long id) {
-                                            selectedCityId = cityList.get(pos).getNId();
-                                        }
-                                        @Override
-                                        public void onNothingSelected(AdapterView<?> parent) {}
-                                    });
+                        // Remove nulls
+                        Iterator<CityListResponse.CityData> it = cityList.iterator();
+                        while (it.hasNext()) {
+                            if (it.next().getCCityName() == null) it.remove();
                         }
+
+                        ArrayAdapter<CityListResponse.CityData> adapter =
+                                new ArrayAdapter<>(DeliveryAddressActivity.this,
+                                        R.layout.spinner_item, cityList);
+                        adapter.setDropDownViewResource(
+                                R.layout.spinner_dropdown_item);
+                        spinnerCity.setAdapter(adapter);
+
+                        // ✅ Prefill city by ID
+                        if (selectCityId != null && !selectCityId.isEmpty()) {
+                            for (int i = 0; i < cityList.size(); i++) {
+                                if (cityList.get(i).getNId()
+                                        .equals(selectCityId)) {
+                                    spinnerCity.setSelection(i);
+                                    selectedCityId = selectCityId;
+                                    break;
+                                }
+                            }
+                        } else if (pendingCity != null) {
+                            setSpinnerByText(spinnerCity, pendingCity);
+                            pendingCity = null;
+                        }
+
+                        spinnerCity.setOnItemSelectedListener(
+                                new AdapterView.OnItemSelectedListener() {
+                                    @Override
+                                    public void onItemSelected(
+                                            AdapterView<?> parent,
+                                            android.view.View view,
+                                            int pos, long id) {
+                                        selectedCityId =
+                                                cityList.get(pos).getNId();
+                                    }
+                                    @Override
+                                    public void onNothingSelected(
+                                            AdapterView<?> parent) {}
+                                });
                     }
 
                     @Override
-                    public void onFailure(Call<CityListResponse> call, Throwable t) {
+                    public void onFailure(Call<CityListResponse> call,
+                                          Throwable t) {
                         Log.e(TAG, "City API failed: " + t.getMessage());
                     }
                 });
     }
 
-    // ================= SAVE =================
+    // ─────────────────────────────────────────────
+    // Save Data
+    // ─────────────────────────────────────────────
 
     private void saveData() {
         String address = etAddressLine.getText().toString().trim();
         String pin     = etPinCode.getText().toString().trim();
 
-        // Validations
         if (lat == 0.0 || lng == 0.0) {
-            Toast.makeText(this, "Please select a location on map",
+            Toast.makeText(this,
+                    "Please select a location on map",
                     Toast.LENGTH_SHORT).show();
             return;
         }
@@ -478,12 +539,14 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
         }
 
         if (selectedStateId.isEmpty()) {
-            Toast.makeText(this, "Please select state", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please select state",
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (selectedCityId.isEmpty()) {
-            Toast.makeText(this, "Please select city", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please select city",
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -494,67 +557,90 @@ public class DeliveryAddressActivity extends AppCompatActivity implements OnMapR
         dialog.setMessage("Saving address...");
         dialog.show();
 
-        // ✅ Correct parameter order matching RegisterInsertRequest.forAddress()
         RegisterInsertRequest req = RegisterInsertRequest.forAddress(
-                mobileNumber,           // mobile
-                addrType,               // addressType
-                pin,                    // pincode
-                address,                // address
-                selectedStateId,        // stateId
-                selectedCityId,         // cityId
-                String.valueOf(lat),    // latitude
-                String.valueOf(lng)     // longitude
+                mobileNumber,
+                addrType,
+                pin,
+                address,
+                selectedStateId,
+                selectedCityId,
+                String.valueOf(lat),
+                String.valueOf(lng)
         );
 
-        apiService.registerInsert(req).enqueue(new Callback<RegisterInsertResponse>() {
-            @Override
-            public void onResponse(Call<RegisterInsertResponse> call,
-                                   Response<RegisterInsertResponse> res) {
-                dialog.dismiss();
+        apiService.registerInsert(req)
+                .enqueue(new Callback<RegisterInsertResponse>() {
 
-                if (!res.isSuccessful() || res.body() == null) {
-                    Toast.makeText(DeliveryAddressActivity.this,
-                            "Failed to save. Try again.", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+                    @Override
+                    public void onResponse(Call<RegisterInsertResponse> call,
+                                           Response<RegisterInsertResponse> res) {
+                        dialog.dismiss();
 
-                RegisterInsertResponse body = res.body();
-                Log.d(TAG, "Address save → status=" + body.getNStatus()
-                        + " msg=" + body.getCMessage());
+                        if (!res.isSuccessful() || res.body() == null) {
+                            Toast.makeText(DeliveryAddressActivity.this,
+                                    "Failed to save. Try again.",
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
 
-                if (body.getNStatus() != 1) {
-                    Toast.makeText(DeliveryAddressActivity.this,
-                            body.getCMessage(), Toast.LENGTH_SHORT).show();
-                    return;
-                }
+                        RegisterInsertResponse body = res.body();
+                        Log.d(TAG, "Address save → status="
+                                + body.getNStatus()
+                                + " msg=" + body.getCMessage());
 
-                // ✅ Success → LoginPage
-                Toast.makeText(DeliveryAddressActivity.this,
-                        "Registration complete!", Toast.LENGTH_SHORT).show();
+                        if (body.getNStatus() != 1) {
+                            Toast.makeText(DeliveryAddressActivity.this,
+                                    body.getCMessage(),
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
 
-                Intent i = new Intent(DeliveryAddressActivity.this, LoginPage.class);
-                i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                        | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(i);
-                finish();
-            }
+                        // ✅ Success → LoginPage
+                        Toast.makeText(DeliveryAddressActivity.this,
+                                "Registration complete!",
+                                Toast.LENGTH_SHORT).show();
 
-            @Override
-            public void onFailure(Call<RegisterInsertResponse> call, Throwable t) {
-                dialog.dismiss();
-                Log.e(TAG, "Address save failed: " + t.getMessage());
-                Toast.makeText(DeliveryAddressActivity.this,
-                        "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
+                        Intent i = new Intent(DeliveryAddressActivity.this,
+                                LoginPage.class);
+                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(i);
+                        finish();
+                    }
+
+                    @Override
+                    public void onFailure(Call<RegisterInsertResponse> call,
+                                          Throwable t) {
+                        dialog.dismiss();
+                        Log.e(TAG, "Address save failed: " + t.getMessage());
+                        Toast.makeText(DeliveryAddressActivity.this,
+                                "Network error: " + t.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
-    // ================= HELPERS =================
+    // ─────────────────────────────────────────────
+    // Status Bar
+    // ─────────────────────────────────────────────
+
+    private void setupStatusBar() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setStatusBarColor(
+                    getResources().getColor(R.color.red_primary));
+            WindowCompat.getInsetsController(
+                            getWindow(), getWindow().getDecorView())
+                    .setAppearanceLightStatusBars(false);
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────
 
     private void setSpinnerByText(Spinner spinner, String text) {
-        if (text == null) return;
+        if (text == null || spinner.getAdapter() == null) return;
         ArrayAdapter adapter = (ArrayAdapter) spinner.getAdapter();
-        if (adapter == null) return;
         for (int i = 0; i < adapter.getCount(); i++) {
             Object item = adapter.getItem(i);
             if (item != null && item.toString().equalsIgnoreCase(text)) {

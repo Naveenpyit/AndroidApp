@@ -15,111 +15,144 @@ import com.example.myapplication.R;
 
 public class GstVerifyScreen extends AppCompatActivity {
 
-    private TextView tvGstNumber;
-    private Button btnBackToSetup;
+    private static final String TAG = "GstVerifyScreen";
+
+    private TextView  tvGstNumber;
+    private Button    btnContinue;
     private ImageView toolbarBack;
 
-    // GST format: 2-digit state code + 10-char PAN + 1 digit + Z + 1 alphanumeric
     private static final String GST_REGEX =
             "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$";
-
-    // PAN format: 5 letters + 4 digits + 1 letter
     private static final String PAN_REGEX =
             "^[A-Z]{5}[0-9]{4}[A-Z]{1}$";
+
+    // ── Data ───────────────────────────────────────────────────────────────────
+    private String  fullName     = "";
+    private String  mobileNumber = "";
+    private String  email        = "";
+    private String  gstNumber    = "";
+    private String  identityType = ""; // "PAN" or "GST"
+    private boolean isValid      = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gst_verify);
 
-        tvGstNumber    = findViewById(R.id.tv_gst_number);
-        btnBackToSetup = findViewById(R.id.btn_back_to_setup);
-        toolbarBack    = findViewById(R.id.toolbarBack);
-
-        String gstNumber    = getIntent().getStringExtra("gstNumber");
-        String identityType = getIntent().getStringExtra("identityType"); // "GST" or "PAN"
-
-        // Show label + value
-        String label = (identityType != null && identityType.equals("PAN")) ? "PAN No" : "GST No";
-        tvGstNumber.setText(label + "\n" + (gstNumber != null ? gstNumber : ""));
-
         setupStatusBar();
+        initViews();
+        readIntentData();
+        displayData();
+        setupClickListeners();
+    }
 
-        // ── Validate on arrival ───────────────────────────────────────────────
-        boolean isValid = validateNumber(gstNumber, identityType);
+
+
+    private void initViews() {
+        tvGstNumber = findViewById(R.id.tv_gst_number);
+        btnContinue = findViewById(R.id.btn_back_to_setup);
+        toolbarBack = findViewById(R.id.toolbarBack);
+    }
+
+
+    private void readIntentData() {
+        fullName     = safe(getIntent().getStringExtra("fullName"));
+        mobileNumber = safe(getIntent().getStringExtra("mobileNumber"));
+        email        = safe(getIntent().getStringExtra("email"));
+        gstNumber    = safe(getIntent().getStringExtra("gstNumber"));
+        identityType = safe(getIntent().getStringExtra("identityType"));
+
+        isValid = validateNumber(gstNumber, identityType);
+    }
+
+    // ─────────────────────────────────────────────
+    // Display
+    // ─────────────────────────────────────────────
+
+    private void displayData() {
+        boolean isPAN = "PAN".equals(identityType);
+        String  label = isPAN ? "PAN No" : "GST No";
+
+        tvGstNumber.setText(label + "\n" + gstNumber);
+
+
+        btnContinue.setText(isValid ? "Continue" : "Re-enter Details");
 
         if (!isValid) {
-            // Show invalid alert → OK goes back to BusinessDetailsActivity
-            showInvalidAlert(identityType);
+            showInvalidAlert();
         }
+    }
 
-        // ── Toolbar back ──────────────────────────────────────────────────────
-        if (toolbarBack != null) {
-            toolbarBack.setOnClickListener(v -> finish());
-        }
 
-        // ── Bottom button ─────────────────────────────────────────────────────
-        btnBackToSetup.setOnClickListener(v -> {
+
+    private void setupClickListeners() {
+
+        toolbarBack.setOnClickListener(v -> goBackToBusiness());
+
+        btnContinue.setOnClickListener(v -> {
             if (isValid) {
-                // Verified → go to DeliveryAddressActivity
-                Intent intent = new Intent(GstVerifyScreen.this, DeliveryAddressActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                startActivity(intent);
-                finish();
+                goToDeliveryAddress();
             } else {
-                // Not valid → remind user with alert
-                showInvalidAlert(identityType);
+                showInvalidAlert();
             }
         });
     }
 
-    // ── Validation ────────────────────────────────────────────────────────────
 
-    private boolean validateNumber(String number, String identityType) {
+
+    private boolean validateNumber(String number, String type) {
         if (number == null || number.trim().isEmpty()) return false;
-
         String trimmed = number.trim().toUpperCase();
-
-        if ("PAN".equals(identityType)) {
-            return trimmed.matches(PAN_REGEX);
-        } else {
-            // Default: GST
-            return trimmed.matches(GST_REGEX);
-        }
+        return "PAN".equals(type)
+                ? trimmed.matches(PAN_REGEX)
+                : trimmed.matches(GST_REGEX);
     }
 
-    // ── Alert dialog ──────────────────────────────────────────────────────────
 
-    private void showInvalidAlert(String identityType) {
-        String type = ("PAN".equals(identityType)) ? "PAN" : "GST";
 
-        String message;
-        if ("PAN".equals(type)) {
-            message = "The PAN number you entered is invalid.\n\n"
-                    + "Valid format: ABCDE1234F\n"
-                    + "(5 letters · 4 digits · 1 letter)";
-        } else {
-            message = "The GST number you entered is invalid.\n\n"
-                    + "Valid format: 29AAACC1206D2ZB\n"
-                    + "(15-character alphanumeric)";
-        }
+    private void showInvalidAlert() {
+        boolean isPAN   = "PAN".equals(identityType);
+        String  type    = isPAN ? "PAN" : "GST";
+        String  message = isPAN
+                ? "The PAN number you entered is invalid.\n\n"
+                + "Valid format: ABCDE1234F\n"
+                + "(5 letters · 4 digits · 1 letter)"
+                : "The GST number you entered is invalid.\n\n"
+                + "Valid format: 29AAACC1206D2ZB\n"
+                + "(15-character alphanumeric)";
 
         new AlertDialog.Builder(this)
                 .setTitle("Invalid " + type + " Number")
                 .setMessage(message)
                 .setCancelable(false)
-                .setPositiveButton("OK", (dialog, which) -> {
+                .setPositiveButton("Re-enter", (dialog, which) -> {
                     dialog.dismiss();
-                    // Navigate back to BusinessDetailsActivity
-                    Intent intent = new Intent(GstVerifyScreen.this, BusinessDetailsActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                    startActivity(intent);
-                    finish();
+                    goBackToBusiness();
                 })
                 .show();
     }
 
-    // ── Status bar ────────────────────────────────────────────────────────────
+
+
+    private void goToDeliveryAddress() {
+        Intent i = new Intent(this, DeliveryAddressActivity.class);
+        i.putExtra("fullName",     fullName);
+        i.putExtra("mobileNumber", mobileNumber);
+        i.putExtra("email",        email);
+        startActivity(i);
+        finish();
+    }
+
+    private void goBackToBusiness() {
+        Intent i = new Intent(this, BusinessDetailsActivity.class);
+        i.putExtra("fullName",     fullName);
+        i.putExtra("mobileNumber", mobileNumber);
+        i.putExtra("email",        email);
+        startActivity(i);
+        finish();
+    }
+
+
 
     private void setupStatusBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -128,8 +161,14 @@ public class GstVerifyScreen extends AppCompatActivity {
             WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
                     .setAppearanceLightStatusBars(false);
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            //noinspection deprecation
             getWindow().setStatusBarColor(
                     getResources().getColor(R.color.red_primary));
         }
+    }
+
+
+    private String safe(String s) {
+        return (s == null) ? "" : s.trim();
     }
 }

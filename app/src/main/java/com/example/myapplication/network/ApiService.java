@@ -4,6 +4,7 @@ package com.example.myapplication.network;
 import com.example.myapplication.model.AddCartRequest;
 import com.example.myapplication.model.AddWishlistRequest;
 import com.example.myapplication.model.AddWishlistResponse;
+import com.example.myapplication.model.AddressResponse;
 import com.example.myapplication.model.CityListRequest;
 import com.example.myapplication.model.CityListResponse;
 import com.example.myapplication.model.CommonResponse;
@@ -37,6 +38,7 @@ import com.example.myapplication.model.StateListResponse;
 import com.example.myapplication.model.UpdateCartRequest;
 import com.example.myapplication.model.VerifyOtpRequest;
 import com.example.myapplication.model.VerifyOtpResponse;
+import com.google.gson.JsonObject;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -110,5 +112,8 @@ public interface ApiService {
 
     @POST("initiateJuspayPayment")
     Call<JuspayInitResponse> initiatePayment(@Body JuspayInitRequest request);
+
+    @POST("list-address")
+    Call<AddressResponse> getAddress(@Body JsonObject body);
 }
 

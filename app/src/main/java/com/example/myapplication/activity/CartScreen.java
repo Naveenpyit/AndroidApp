@@ -15,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.example.myapplication.CheckoutScreen;
+
 import com.example.myapplication.R;
 import com.example.myapplication.adapter.CartAdapter;
 import com.example.myapplication.model.CartModel;
@@ -50,7 +50,7 @@ public class CartScreen extends AppCompatActivity implements CartAdapter.CartCha
     private BottomNavigationView  bottomNav;
     private ProgressDialog        progressDialog;
 
-    // ── Data ──────────────────────────────────────────────────────────────────
+   private MaterialButton btn_change_address;
     private CartAdapter           adapter;
     private ArrayList<CartModel>  cartItems;
     private ApiService            apiService;
@@ -91,6 +91,7 @@ public class CartScreen extends AppCompatActivity implements CartAdapter.CartCha
         tvSubtotal    = findViewById(R.id.tv_subtotal);
         btnProceed    = findViewById(R.id.btn_proceed);
         cbSelectAll   = findViewById(R.id.cb_select_all);
+        btn_change_address = findViewById(R.id.btn_change_address);
       //  layoutEmpty   = findViewById(R.id.layout_empty);
 
         // Optional summary views — safe if not in layout
@@ -115,6 +116,10 @@ public class CartScreen extends AppCompatActivity implements CartAdapter.CartCha
             CartManager.getInstance().selectAll(checked);
             adapter.notifyDataSetChanged();
             updateSummary();
+        });
+        btn_change_address.setOnClickListener(v->{
+            Intent i = new Intent(CartScreen.this,AddressActivity.class);
+            startActivity(i);
         });
 
         // Proceed button

@@ -12,12 +12,18 @@ import android.widget.ImageView;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.myapplication.activity.BusinessDetailsActivity;
 import com.example.myapplication.activity.LoginPage;
 import com.example.myapplication.activity.MainActivity;
 import com.example.myapplication.activity.OnboadingScreen;
-import com.example.myapplication.activity.OwnerDetailsActivity;
 import com.example.myapplication.activity.SetupStepsActivity;
+import com.example.myapplication.model.RegisterDetailsRequest;
+import com.example.myapplication.model.RegisterDetailsResponse;
+import com.example.myapplication.network.ApiService;
+import com.example.myapplication.network.RetrofitClient;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class SplashScreen extends AppCompatActivity {
 
@@ -30,55 +36,109 @@ public class SplashScreen extends AppCompatActivity {
         setContentView(R.layout.activity_splash_screen);
 
         logoimage = findViewById(R.id.logoimage);
-        Animation animation = AnimationUtils.loadAnimation(this, R.anim.slide_in_left);
+        Animation animation = AnimationUtils.loadAnimation(
+                this, R.anim.slide_in_left);
         logoimage.setAnimation(animation);
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
 
-            SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+            SharedPreferences prefs =
+                    getSharedPreferences("app_prefs", MODE_PRIVATE);
 
-            boolean isFirstTime = prefs.getBoolean("is_first_time", true);
-            boolean isLoggedIn = prefs.getBoolean("is_logged_in", false);
-            String lastScreen = prefs.getString("last_screen", "");
+            boolean isFirstTime  = prefs.getBoolean("is_first_time", true);
+            boolean isLoggedIn   = prefs.getBoolean("is_logged_in", false);
+            String  savedMobile  = prefs.getString("mobile", "");
 
-            // 🔥 FLOW CONTROL
             if (isFirstTime) {
 
-                startActivity(new Intent(SplashScreen.this, OnboadingScreen.class));
+                startActivity(new Intent(SplashScreen.this,
+                        OnboadingScreen.class));
+                finish();
 
-            } else if (!isLoggedIn) {
+            } else if (!isLoggedIn || savedMobile.isEmpty()) {
 
-                startActivity(new Intent(SplashScreen.this, LoginPage.class));
+                goToLogin();
 
             } else {
 
-                // Resume last screen
-                switch (lastScreen) {
-
-                    case "OwnerDetails":
-                        startActivity(new Intent(SplashScreen.this, OwnerDetailsActivity.class));
-                        break;
-
-                    case "BusinessDetails":
-                        startActivity(new Intent(SplashScreen.this, BusinessDetailsActivity.class));
-                        break;
-
-                    case "SetupSteps":
-                        startActivity(new Intent(SplashScreen.this, SetupStepsActivity.class));
-                        break;
-
-                    case "Main":
-                        startActivity(new Intent(SplashScreen.this, MainActivity.class));
-                        break;
-
-                    default:
-                        startActivity(new Intent(SplashScreen.this, MainActivity.class));
-                        break;
-                }
+                checkRegistrationStatus(savedMobile);
             }
 
-            finish(); // only once!
-
         }, 2000);
+    }
+
+
+    private void checkRegistrationStatus(String mobile) {
+        ApiService apiService = RetrofitClient.getClient(this);
+
+        apiService.getRegisterDetails(new RegisterDetailsRequest(mobile))
+                .enqueue(new Callback<RegisterDetailsResponse>() {
+
+                    @Override
+                    public void onResponse(Call<RegisterDetailsResponse> call,
+                                           Response<RegisterDetailsResponse> res) {
+
+                        if (!res.isSuccessful() || res.body() == null
+                                || res.body().getNStatus() != 1
+                                || res.body().getJData() == null) {
+                            // API fail → LoginPage
+                            goToLogin();
+                            return;
+                        }
+
+                        RegisterDetailsResponse.JData data =
+                                res.body().getJData();
+
+                        int nOwner    = 0;
+                        int nBusiness = 0;
+                        int nAddress  = 0;
+
+                        if (data.getIsInformations() != null) {
+                            nOwner    = data.getIsInformations().getNOwner();
+                            nBusiness = data.getIsInformations().getNBusiness();
+                            nAddress  = data.getIsInformations().getNAddress();
+                        }
+
+                        if (nOwner == 1 && nBusiness == 1 && nAddress == 1) {
+                            // ✅ All done → MainActivity
+                            goToMain();
+                        } else {
+                            // ✅ Incomplete → SetupStepsActivity
+                            goToSetup(mobile);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<RegisterDetailsResponse> call,
+                                          Throwable t) {
+                        // Network error → LoginPage
+                        goToLogin();
+                    }
+                });
+    }
+
+    private void goToMain() {
+        Intent i = new Intent(SplashScreen.this, MainActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(i);
+        finish();
+    }
+
+    private void goToSetup(String mobile) {
+        Intent i = new Intent(SplashScreen.this, SetupStepsActivity.class);
+        i.putExtra("mobile", mobile);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(i);
+        finish();
+    }
+
+    private void goToLogin() {
+        Intent i = new Intent(SplashScreen.this, LoginPage.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(i);
+        finish();
     }
 }

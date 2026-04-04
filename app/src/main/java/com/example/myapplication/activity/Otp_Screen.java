@@ -15,8 +15,6 @@ import androidx.core.view.WindowCompat;
 import com.example.myapplication.R;
 import com.example.myapplication.model.RefreshTokenRequest;
 import com.example.myapplication.model.RefreshTokenResponse;
-import com.example.myapplication.model.RegisterDetailsRequest;
-import com.example.myapplication.model.RegisterDetailsResponse;
 import com.example.myapplication.model.VerifyOtpRequest;
 import com.example.myapplication.model.VerifyOtpResponse;
 import com.example.myapplication.network.ApiService;
@@ -71,8 +69,6 @@ public class Otp_Screen extends AppCompatActivity {
         });
     }
 
-
-
     private void verifyOtp(String mobile, String otp) {
         apiService.verifyOtp(new VerifyOtpRequest(mobile, otp))
                 .enqueue(new Callback<VerifyOtpResponse>() {
@@ -99,7 +95,7 @@ public class Otp_Screen extends AppCompatActivity {
                             return;
                         }
 
-                        // Save tokens
+                        // ── Save tokens ───────────────────────────────────────
                         if (body.getJData() != null && !body.getJData().isEmpty()) {
                             VerifyOtpResponse.TokenData token = body.getJData().get(0);
                             tokenManager.saveToken(token.getJToken());
@@ -120,13 +116,13 @@ public class Otp_Screen extends AppCompatActivity {
 
                         refreshTokenSilently();
 
+                        // ── Route by processType ──────────────────────────────
                         int processType = body.getNProcessType();
-                        Log.d(TAG, "processType=" + processType);
+                        Log.d(TAG, "RAW processType=" + processType);
 
                         switch (processType) {
 
                             case 1:
-
                                 goToMain();
                                 break;
 
@@ -135,9 +131,13 @@ public class Otp_Screen extends AppCompatActivity {
                                 break;
 
                             case 3:
+                                goToSetupSteps();
+                                break;
+
                             default:
-                                showLoader("Loading...");
-                                fetchRegisterDetails();
+                                Log.e(TAG, "Unknown processType=" + processType
+                                        + " → redirecting to SetupSteps");
+                                goToSetupSteps();
                                 break;
                         }
                     }
@@ -152,87 +152,7 @@ public class Otp_Screen extends AppCompatActivity {
                 });
     }
 
-    // ─────────────────────────────────────────────
-    // Step 2: Fetch register-details (process_type=3)
-    // ─────────────────────────────────────────────
 
-    private void fetchRegisterDetails() {
-        apiService.getRegisterDetails(new RegisterDetailsRequest(mobile))
-                .enqueue(new Callback<RegisterDetailsResponse>() {
-
-                    @Override
-                    public void onResponse(Call<RegisterDetailsResponse> call,
-                                           Response<RegisterDetailsResponse> res) {
-                        hideLoader();
-
-                        // API fail அல்லது data இல்லை → OwnerDetails (new user)
-                        if (!res.isSuccessful() || res.body() == null
-                                || res.body().getNStatus() != 1
-                                || res.body().getJData() == null) {
-                            Log.d(TAG, "register-details empty → new user");
-                            goToOwnerDetails("", mobile, "");
-                            return;
-                        }
-
-                        RegisterDetailsResponse body = res.body();
-                        int step = 0;
-                        try {
-                           // step = Integer.parseInt(body.getNStep());
-                             step = body.getNStep();
-                        } catch (Exception ignored) {}
-
-                        Log.d(TAG, "register-details step=" + step);
-                        routeByStep(step, body);
-                    }
-
-                    @Override
-                    public void onFailure(Call<RegisterDetailsResponse> call,
-                                          Throwable t) {
-                        hideLoader();
-                        Log.e(TAG, "register-details failure: " + t.getMessage());
-                        goToOwnerDetails("", mobile, "");
-                    }
-                });
-    }
-
-    // ─────────────────────────────────────────────
-    // Step 3: Route by step
-    // ─────────────────────────────────────────────
-
-    private void routeByStep(int step, RegisterDetailsResponse body) {
-        RegisterDetailsResponse.JData data = body.getJData();
-
-        switch (step) {
-
-            case 1:
-                // Owner not filled
-                goToOwnerDetails("", mobile, "");
-                break;
-
-            case 2:
-                // Owner done → Business pending (prefill owner data)
-                String name  = (data != null && data.getOwnerDetails() != null)
-                        ? safe(data.getOwnerDetails().getCName())  : "";
-                String email = (data != null && data.getOwnerDetails() != null)
-                        ? safe(data.getOwnerDetails().getCEmail()) : "";
-                goToBusinessDetails(name, mobile, email, data);
-                break;
-
-            case 3:
-                // Business done → Delivery address pending (prefill all)
-                goToDeliveryAddress(data);
-                break;
-
-            default:
-                // All done → Dashboard
-                goToMain();
-                break;
-        }
-    }
-
-    // ─────────────────────────────────────────────
-    // Navigation
-    // ─────────────────────────────────────────────
 
     private void goToMain() {
         getSharedPreferences("app_prefs", MODE_PRIVATE)
@@ -247,53 +167,13 @@ public class Otp_Screen extends AppCompatActivity {
         finish();
     }
 
-    private void goToOwnerDetails(String name, String mob, String email) {
-        Intent i = new Intent(Otp_Screen.this, OwnerDetailsActivity.class);
-        i.putExtra("mobile",   mob.isEmpty() ? mobile : mob);
-        i.putExtra("fullName", name);
-        i.putExtra("email",    email);
+    private void goToSetupSteps() {
+        Intent i = new Intent(Otp_Screen.this, SetupStepsActivity.class);
+        i.putExtra("mobile", mobile);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(i);
         finish();
     }
-
-    private void goToBusinessDetails(String name, String mob, String email,
-                                     RegisterDetailsResponse.JData data) {
-        Intent i = new Intent(Otp_Screen.this, BusinessDetailsActivity.class);
-        i.putExtra("fullName",     name);
-        i.putExtra("mobileNumber", mob.isEmpty() ? mobile : mob);
-        i.putExtra("email",        email);
-
-        if (data != null && data.getBusinessDetails() != null) {
-            i.putExtra("prefillBType",      data.getBusinessDetails().getNType());
-            i.putExtra("prefillVerifyType", data.getBusinessDetails().getNVerifyType());
-            i.putExtra("prefillPan",        data.getBusinessDetails().getCPan());
-            i.putExtra("prefillGst",        data.getBusinessDetails().getCGst());
-        }
-        startActivity(i);
-        finish();
-    }
-
-    private void goToDeliveryAddress(RegisterDetailsResponse.JData data) {
-        Intent i = new Intent(Otp_Screen.this, DeliveryAddressActivity.class);
-
-        if (data != null && data.getOwnerDetails() != null) {
-            i.putExtra("fullName",     safe(data.getOwnerDetails().getCName()));
-            i.putExtra("mobileNumber", safe(data.getOwnerDetails().getNMobile()));
-            i.putExtra("email",        safe(data.getOwnerDetails().getCEmail()));
-        }
-        if (data != null && data.getAddressDetails() != null) {
-            i.putExtra("prefillStateId",  safe(data.getAddressDetails().getNState()));
-            i.putExtra("prefillCityId",   safe(data.getAddressDetails().getNCity()));
-            i.putExtra("prefillAddress",  safe(data.getAddressDetails().getCAddress()));
-            i.putExtra("prefillPin",      safe(data.getAddressDetails().getNPincode()));
-            i.putExtra("prefillLat",      safe(data.getAddressDetails().getCLatitude()));
-            i.putExtra("prefillLng",      safe(data.getAddressDetails().getCLongitude()));
-            i.putExtra("prefillAddrType", "1");
-        }
-        startActivity(i);
-        finish();
-    }
-
 
     private void showVerificationPendingAlert() {
         new AlertDialog.Builder(this)
@@ -334,6 +214,7 @@ public class Otp_Screen extends AppCompatActivity {
                             Log.d(TAG, "Token refreshed silently");
                         }
                     }
+
                     @Override
                     public void onFailure(Call<RefreshTokenResponse> call, Throwable t) {
                         Log.e(TAG, "Token refresh failed: " + t.getMessage());
@@ -370,9 +251,5 @@ public class Otp_Screen extends AppCompatActivity {
             getWindow().setStatusBarColor(
                     getResources().getColor(R.color.red_primary));
         }
-    }
-
-    private String safe(String s) {
-        return (s == null) ? "" : s.trim();
     }
 }

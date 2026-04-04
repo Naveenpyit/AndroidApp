@@ -66,10 +66,14 @@ public class LoginPage extends AppCompatActivity {
                         Toast.makeText(LoginPage.this,
                                 "OTP Sent Successfully", Toast.LENGTH_SHORT).show();
 
+                        getSharedPreferences("app_prefs", MODE_PRIVATE)
+                                .edit()
+                                .putString("mobile", mobile)
+                                .apply();
+
                         Intent i = new Intent(LoginPage.this, Otp_Screen.class);
                         i.putExtra("mobile", mobile);
                         startActivity(i);
-
                     } else {
                         Toast.makeText(LoginPage.this,
                                 "Failed to send OTP. Try again.", Toast.LENGTH_SHORT).show();

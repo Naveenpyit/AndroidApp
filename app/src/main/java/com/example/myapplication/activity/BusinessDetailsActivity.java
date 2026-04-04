@@ -75,7 +75,9 @@ public class BusinessDetailsActivity extends AppCompatActivity {
     private ImageView      toolbarBack;
 
     // ── State ──────────────────────────────────────────────────────────────────
-    private String  fullName, mobileNumber, email;
+    private String  fullName     = "";
+    private String  mobileNumber = "";
+    private String  email        = "";
     private Uri     cameraImageUri;
     private boolean imageSelected = false;
     private String  imageBase64   = "";
@@ -88,7 +90,8 @@ public class BusinessDetailsActivity extends AppCompatActivity {
     private final ActivityResultLauncher<Intent> cameraLauncher =
             registerForActivityResult(
                     new ActivityResultContracts.StartActivityForResult(), result -> {
-                        if (result.getResultCode() == RESULT_OK && cameraImageUri != null) {
+                        if (result.getResultCode() == RESULT_OK
+                                && cameraImageUri != null) {
                             showImagePreview(cameraImageUri);
                         }
                     });
@@ -119,18 +122,20 @@ public class BusinessDetailsActivity extends AppCompatActivity {
         preFillFromIntent();
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // Intent data
-    // ══════════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
+    // Intent Data
+    // ─────────────────────────────────────────────
+
     private void getIntentData() {
         fullName     = safe(getIntent().getStringExtra("fullName"));
         mobileNumber = safe(getIntent().getStringExtra("mobileNumber"));
         email        = safe(getIntent().getStringExtra("email"));
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
     // Views
-    // ══════════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
+
     private void initializeViews() {
         rbRetailer          = findViewById(R.id.rbRetailer);
         rbWholesaler        = findViewById(R.id.rbWholesaler);
@@ -147,12 +152,11 @@ public class BusinessDetailsActivity extends AppCompatActivity {
         btnSaveContinue     = findViewById(R.id.btnSaveContinue);
         toolbarBack         = findViewById(R.id.toolbarBack);
 
-        // ── Because rbRetailer / rbWholesaler / rbDistributor are inside
-        //    separate LinearLayouts (not a RadioGroup) in the XML, we must
-        //    manually enforce single-selection behaviour. ─────────────────────
+        // ✅ Business type — manual single selection
+        // (RadioButtons are inside separate LinearLayouts, not a RadioGroup)
         View.OnClickListener businessTypeListener = v -> {
-            rbRetailer.setChecked(v.getId() == R.id.rbRetailer);
-            rbWholesaler.setChecked(v.getId() == R.id.rbWholesaler);
+            rbRetailer.setChecked(v.getId()    == R.id.rbRetailer);
+            rbWholesaler.setChecked(v.getId()  == R.id.rbWholesaler);
             rbDistributor.setChecked(v.getId() == R.id.rbDistributor);
         };
         rbRetailer.setOnClickListener(businessTypeListener);
@@ -160,18 +164,20 @@ public class BusinessDetailsActivity extends AppCompatActivity {
         rbDistributor.setOnClickListener(businessTypeListener);
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // Pre-fill (returning user)
-    //   Business type → "1"=Retailer  "2"=Wholesaler  "3"=Distributor
-    //   Verify type   → "1"=PAN       "2"=GST
-    // ══════════════════════════════════════════════════════════════════════════
-    private void preFillFromIntent() {
-        String prefillBType      = getIntent().getStringExtra("prefillBType");
-        String prefillVerifyType = getIntent().getStringExtra("prefillVerifyType");
-        String prefillPan        = getIntent().getStringExtra("prefillPan");
-        String prefillGst        = getIntent().getStringExtra("prefillGst");
+    // ─────────────────────────────────────────────
+    // PreFill (returning user)
+    // Business type → "1"=Retailer "2"=Wholesaler "3"=Distributor
+    // Verify type   → "1"=PAN      "2"=GST
+    // ─────────────────────────────────────────────
 
-        if (prefillBType != null && !prefillBType.isEmpty()) {
+    private void preFillFromIntent() {
+        String prefillBType      = safe(getIntent().getStringExtra("prefillBType"));
+        String prefillVerifyType = safe(getIntent().getStringExtra("prefillVerifyType"));
+        String prefillPan        = safe(getIntent().getStringExtra("prefillPan"));
+        String prefillGst        = safe(getIntent().getStringExtra("prefillGst"));
+
+        // ✅ Business type prefill
+        if (!prefillBType.isEmpty()) {
             rbRetailer.setChecked(false);
             rbWholesaler.setChecked(false);
             rbDistributor.setChecked(false);
@@ -182,43 +188,55 @@ public class BusinessDetailsActivity extends AppCompatActivity {
             }
         }
 
-        if (prefillVerifyType != null && !prefillVerifyType.isEmpty()) {
+        // ✅ PAN / GST prefill
+        if (!prefillVerifyType.isEmpty()) {
             if ("1".equals(prefillVerifyType)) {
                 rbPAN.setChecked(true);
+                rbGST.setChecked(false);
                 etGSTNumber.setHint("Enter PAN Number here...");
-                if (prefillPan != null && !prefillPan.isEmpty())
+                if (!prefillPan.isEmpty())
                     etGSTNumber.setText(prefillPan);
             } else {
                 rbGST.setChecked(true);
+                rbPAN.setChecked(false);
                 etGSTNumber.setHint("Enter GST Number here...");
-                if (prefillGst != null && !prefillGst.isEmpty())
+                if (!prefillGst.isEmpty())
                     etGSTNumber.setText(prefillGst);
             }
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // Click listeners
-    // ══════════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
+    // Click Listeners
+    // ─────────────────────────────────────────────
+
     private void setupClickListeners() {
-        toolbarBack.setOnClickListener(v -> onBackPressed());
+
+        // ✅ Back → OwnerDetails with prefill
+        toolbarBack.setOnClickListener(v -> goBackToOwnerDetails());
+
         flUploadImage.setOnClickListener(v -> showImagePickerDialog());
 
-        rgIdentity.setOnCheckedChangeListener((group, checkedId) ->
-                etGSTNumber.setHint(checkedId == R.id.rbPAN
-                        ? "Enter PAN Number here..."
-                        : "Enter GST Number here..."));
+        // PAN/GST toggle → hint + clear
+        rgIdentity.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.rbPAN) {
+                etGSTNumber.setHint("Enter PAN Number here...");
+            } else {
+                etGSTNumber.setHint("Enter GST Number here...");
+            }
+            etGSTNumber.setText("");
+        });
 
         btnSaveContinue.setOnClickListener(v -> validateAndSave());
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // Validate → register-insert step 2
-    // ══════════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
+    // Validate & Save
+    // ─────────────────────────────────────────────
+
     private void validateAndSave() {
 
-        // ── 1. Business type ──────────────────────────────────────────────────
-        //   Retailer = "1" | Wholesaler = "2" | Distributor = "3"
+        // 1. Business type
         String businessTypeCode = getBusinessTypeCode();
         if (businessTypeCode.isEmpty()) {
             Toast.makeText(this, "Please select a business type",
@@ -226,18 +244,19 @@ public class BusinessDetailsActivity extends AppCompatActivity {
             return;
         }
 
-        // ── 2. PAN / GST ──────────────────────────────────────────────────────
+        // 2. PAN / GST
         boolean isPAN      = rbPAN.isChecked();
-        String  verifyType = isPAN ? "1" : "2";    // 1=PAN, 2=GST
+        String  verifyType = isPAN ? "1" : "2";
         String  idNumber   = etGSTNumber.getText().toString().trim();
 
         if (idNumber.isEmpty()) {
-            etGSTNumber.setError("Please enter " + (isPAN ? "PAN" : "GST") + " number");
+            etGSTNumber.setError("Please enter "
+                    + (isPAN ? "PAN" : "GST") + " number");
             etGSTNumber.requestFocus();
             return;
         }
 
-        // ── 3. Shop image ─────────────────────────────────────────────────────
+        // 3. Shop image
         if (!imageSelected) {
             flUploadImage.setBackgroundResource(R.drawable.bg_upload_dashed_error);
             tvImageError.setVisibility(View.VISIBLE);
@@ -253,7 +272,7 @@ public class BusinessDetailsActivity extends AppCompatActivity {
                 + " verifyType=" + verifyType
                 + " pan=" + pan + " gst=" + gst);
 
-        showLoader("Saving business details…");
+        showLoader("Saving business details...");
 
         RegisterInsertRequest req = RegisterInsertRequest.forBusiness(
                 mobileNumber, businessTypeCode, verifyType, pan, gst, imageBase64);
@@ -267,7 +286,8 @@ public class BusinessDetailsActivity extends AppCompatActivity {
 
                 if (!res.isSuccessful() || res.body() == null) {
                     Toast.makeText(BusinessDetailsActivity.this,
-                            "Failed to save. Try again.", Toast.LENGTH_SHORT).show();
+                            "Failed to save. Try again.",
+                            Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -281,18 +301,8 @@ public class BusinessDetailsActivity extends AppCompatActivity {
                     return;
                 }
 
-                // ✅ Success → go to DeliveryAddressActivity
-                Intent i = new Intent(BusinessDetailsActivity.this,
-                        DeliveryAddressActivity.class);
-                i.putExtra("fullName",     fullName);
-                i.putExtra("mobileNumber", mobileNumber);
-                i.putExtra("email",        email);
-                i.putExtra("businessType", businessTypeCode);
-                i.putExtra("identityType", verifyType);
-                i.putExtra("gstNumber",    gst.isEmpty() ? pan : gst);
-                i.putExtra("panNumber",    pan);
-                startActivity(i);
-                finish();
+                // ✅ Save success → GstVerifyScreen
+                goToGstVerify(isPAN, pan, gst);
             }
 
             @Override
@@ -300,20 +310,12 @@ public class BusinessDetailsActivity extends AppCompatActivity {
                 hideLoader();
                 Log.e(TAG, "Network error: " + t.getMessage());
                 Toast.makeText(BusinessDetailsActivity.this,
-                        "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                        "Network error: " + t.getMessage(),
+                        Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    /**
-     * Maps selected radio button → API code.
-     *   Retailer    → "1"
-     *   Wholesaler  → "2"
-     *   Distributor → "3"
-     *
-     * We check each button individually because the XML has them inside
-     * separate LinearLayouts, not a single RadioGroup.
-     */
     private String getBusinessTypeCode() {
         if (rbRetailer.isChecked())    return "1";
         if (rbWholesaler.isChecked())  return "2";
@@ -321,9 +323,37 @@ public class BusinessDetailsActivity extends AppCompatActivity {
         return "";
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // Image picker dialog (bottom sheet)
-    // ══════════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
+    // Navigation
+    // ─────────────────────────────────────────────
+
+    private void goToGstVerify(boolean isPAN, String pan, String gst) {
+        Intent i = new Intent(this, GstVerifyScreen.class);
+        i.putExtra("fullName",     fullName);
+        i.putExtra("mobileNumber", mobileNumber);
+        i.putExtra("email",        email);
+        i.putExtra("gstNumber",    isPAN ? pan : gst);
+        i.putExtra("identityType", isPAN ? "PAN" : "GST");
+        // ✅ No CLEAR_TASK — normal forward
+        startActivity(i);
+        finish();
+    }
+
+    private void goBackToOwnerDetails() {
+        Intent i = new Intent(this, OwnerDetailsActivity.class);
+        i.putExtra("mobile",      mobileNumber);
+        i.putExtra("fullName",    fullName);
+        i.putExtra("email",       email);
+        i.putExtra("isPrefilled", !fullName.isEmpty());
+        // ✅ No flags — normal back navigation
+        startActivity(i);
+        finish();
+    }
+
+    // ─────────────────────────────────────────────
+    // Image Picker Dialog
+    // ─────────────────────────────────────────────
+
     private void showImagePickerDialog() {
         Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -339,18 +369,22 @@ public class BusinessDetailsActivity extends AppCompatActivity {
         }
 
         dialog.findViewById(R.id.ll_camera).setOnClickListener(v -> {
-            dialog.dismiss(); openCamera();
+            dialog.dismiss();
+            openCamera();
         });
         dialog.findViewById(R.id.ll_gallery).setOnClickListener(v -> {
-            dialog.dismiss(); openGallery();
+            dialog.dismiss();
+            openGallery();
         });
-        dialog.findViewById(R.id.tv_cancel).setOnClickListener(v -> dialog.dismiss());
+        dialog.findViewById(R.id.tv_cancel).setOnClickListener(v ->
+                dialog.dismiss());
         dialog.show();
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
     // Camera
-    // ══════════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
+
     private void openCamera() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -364,12 +398,13 @@ public class BusinessDetailsActivity extends AppCompatActivity {
     private void launchCamera() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (intent.resolveActivity(getPackageManager()) == null) {
-            Toast.makeText(this, "No camera app found", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "No camera app found",
+                    Toast.LENGTH_SHORT).show();
             return;
         }
         try {
-            File photoFile = createImageFile();
-            cameraImageUri = FileProvider.getUriForFile(this,
+            File photoFile  = createImageFile();
+            cameraImageUri  = FileProvider.getUriForFile(this,
                     getApplicationContext().getPackageName() + ".fileprovider",
                     photoFile);
             intent.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri);
@@ -377,19 +412,22 @@ public class BusinessDetailsActivity extends AppCompatActivity {
                     | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             cameraLauncher.launch(intent);
         } catch (IOException e) {
-            Toast.makeText(this, "Unable to create image file", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Unable to create image file",
+                    Toast.LENGTH_SHORT).show();
         }
     }
 
     private File createImageFile() throws IOException {
-        String stamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
-                .format(new Date());
-        return File.createTempFile("SHOP_" + stamp, ".jpg", getExternalFilesDir(null));
+        String stamp = new SimpleDateFormat("yyyyMMdd_HHmmss",
+                Locale.getDefault()).format(new Date());
+        return File.createTempFile("SHOP_" + stamp, ".jpg",
+                getExternalFilesDir(null));
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
     // Gallery
-    // ══════════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
+
     private void openGallery() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this,
@@ -420,14 +458,16 @@ public class BusinessDetailsActivity extends AppCompatActivity {
         galleryLauncher.launch(intent);
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // Show image preview + encode Base64
-    // ══════════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
+    // Image Preview + Base64
+    // ─────────────────────────────────────────────
+
     private void showImagePreview(Uri uri) {
         try {
             InputStream stream = getContentResolver().openInputStream(uri);
             if (stream == null) {
-                Toast.makeText(this, "Could not open image", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Could not open image",
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -435,30 +475,35 @@ public class BusinessDetailsActivity extends AppCompatActivity {
             stream.close();
 
             if (bitmap == null) {
-                Toast.makeText(this, "Failed to decode image", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Failed to decode image",
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos);
-            imageBase64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP);
+            imageBase64 = Base64.encodeToString(
+                    baos.toByteArray(), Base64.NO_WRAP);
 
             ivShopPreview.setImageBitmap(bitmap);
             ivShopPreview.setVisibility(View.VISIBLE);
             llUploadPlaceholder.setVisibility(View.GONE);
             llEditOverlay.setVisibility(View.VISIBLE);
-            flUploadImage.setBackgroundResource(R.drawable.bg_upload_dashed_success);
+            flUploadImage.setBackgroundResource(
+                    R.drawable.bg_upload_dashed_success);
             tvImageError.setVisibility(View.GONE);
             imageSelected = true;
 
         } catch (IOException e) {
-            Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Failed to load image",
+                    Toast.LENGTH_SHORT).show();
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // Permission result
-    // ══════════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
+    // Permission Result
+    // ─────────────────────────────────────────────
+
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
@@ -476,9 +521,10 @@ public class BusinessDetailsActivity extends AppCompatActivity {
                     Toast.LENGTH_SHORT).show();
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // Loader & status bar
-    // ══════════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
+    // Loader & Status Bar
+    // ─────────────────────────────────────────────
+
     private void setupLoader() {
         progressDialog = new ProgressDialog(this);
         progressDialog.setCancelable(false);
@@ -493,9 +539,8 @@ public class BusinessDetailsActivity extends AppCompatActivity {
     }
 
     private void hideLoader() {
-        if (progressDialog != null && progressDialog.isShowing()) {
+        if (progressDialog != null && progressDialog.isShowing())
             progressDialog.dismiss();
-        }
     }
 
     private void setupStatusBar() {

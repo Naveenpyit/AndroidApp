@@ -33,9 +33,8 @@ public class OwnerDetailsActivity extends AppCompatActivity {
 
     private ApiService     apiService;
     private ProgressDialog progressDialog;
-    private String         mobile; // passed from OTP screen
+    private String         mobile = "";
 
-    // ══════════════════════════════════════════════════════════════════════════
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,20 +50,32 @@ public class OwnerDetailsActivity extends AppCompatActivity {
         initializeViews();
         setupClickListeners();
 
-        // Pre-fill mobile (read-only display)
+        // ✅ Mobile prefill (always, read-only)
         if (!mobile.isEmpty()) {
             etMobileNumber.setText(mobile);
-            etMobileNumber.setEnabled(false); // mobile is already verified
+            etMobileNumber.setEnabled(false);
+        }
+
+        // ✅ Returning user → prefill name & email (editable)
+        boolean isPrefilled = getIntent().getBooleanExtra("isPrefilled", false);
+        if (isPrefilled) {
+            String prefillName  = getIntent().getStringExtra("fullName");
+            String prefillEmail = getIntent().getStringExtra("email");
+
+            if (prefillName != null && !prefillName.isEmpty())
+                etFullName.setText(prefillName);
+
+            if (prefillEmail != null && !prefillEmail.isEmpty())
+                etEmail.setText(prefillEmail);
         }
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
     private void initializeViews() {
-        etFullName     = findViewById(R.id.etFullName);
-        etMobileNumber = findViewById(R.id.etMobileNumber);
-        etEmail        = findViewById(R.id.etEmail);
+        etFullName      = findViewById(R.id.etFullName);
+        etMobileNumber  = findViewById(R.id.etMobileNumber);
+        etEmail         = findViewById(R.id.etEmail);
         btnSaveContinue = findViewById(R.id.btnSaveContinue);
-        toolbarBack    = findViewById(R.id.toolbarBack);
+        toolbarBack     = findViewById(R.id.toolbarBack);
     }
 
     private void setupClickListeners() {
@@ -72,33 +83,37 @@ public class OwnerDetailsActivity extends AppCompatActivity {
         btnSaveContinue.setOnClickListener(v -> validateAndSave());
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // Validate → call register-insert step 1
-    // ══════════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
+    // Validate & Save
+    // ─────────────────────────────────────────────
+
     private void validateAndSave() {
         String fullName     = etFullName.getText().toString().trim();
         String mobileNumber = etMobileNumber.getText().toString().trim();
         String email        = etEmail.getText().toString().trim();
 
         if (fullName.isEmpty()) {
-            Toast.makeText(this, "Please enter full name", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please enter full name",
+                    Toast.LENGTH_SHORT).show();
             etFullName.requestFocus();
             return;
         }
 
         if (mobileNumber.isEmpty()) {
-            Toast.makeText(this, "Please enter mobile number", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please enter mobile number",
+                    Toast.LENGTH_SHORT).show();
             etMobileNumber.requestFocus();
             return;
         }
 
         if (mobileNumber.length() < 10) {
-            Toast.makeText(this, "Enter valid 10-digit mobile number", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Enter valid 10-digit mobile number",
+                    Toast.LENGTH_SHORT).show();
             etMobileNumber.requestFocus();
             return;
         }
 
-        showLoader("Saving details…");
+        showLoader("Saving details...");
         saveOwnerDetails(fullName, mobileNumber, email);
     }
 
@@ -114,7 +129,8 @@ public class OwnerDetailsActivity extends AppCompatActivity {
 
                 if (!res.isSuccessful() || res.body() == null) {
                     Toast.makeText(OwnerDetailsActivity.this,
-                            "Failed to save. Try again.", Toast.LENGTH_SHORT).show();
+                            "Failed to save. Try again.",
+                            Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -128,7 +144,7 @@ public class OwnerDetailsActivity extends AppCompatActivity {
                     return;
                 }
 
-                // Success → go to BusinessDetailsActivity
+
                 Intent i = new Intent(OwnerDetailsActivity.this,
                         BusinessDetailsActivity.class);
                 i.putExtra("fullName",     name);
@@ -143,14 +159,16 @@ public class OwnerDetailsActivity extends AppCompatActivity {
                 hideLoader();
                 Log.e(TAG, "register-insert failure: " + t.getMessage());
                 Toast.makeText(OwnerDetailsActivity.this,
-                        "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                        "Network error: " + t.getMessage(),
+                        Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // Loader & status bar
-    // ══════════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────
+    // Loader & Status Bar
+    // ─────────────────────────────────────────────
+
     private void setupLoader() {
         progressDialog = new ProgressDialog(this);
         progressDialog.setCancelable(false);
@@ -165,9 +183,8 @@ public class OwnerDetailsActivity extends AppCompatActivity {
     }
 
     private void hideLoader() {
-        if (progressDialog != null && progressDialog.isShowing()) {
+        if (progressDialog != null && progressDialog.isShowing())
             progressDialog.dismiss();
-        }
     }
 
     private void setupStatusBar() {

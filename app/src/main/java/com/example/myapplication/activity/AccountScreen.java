@@ -18,7 +18,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 public class AccountScreen extends AppCompatActivity {
 
     private TextView tvUserName, tvUserPhone;
-    private ImageView ivAvatar, btnEditProfile;
+    private ImageView ivAvatar, btnEditProfile,btn_edit_profile;
     private TextView btnLogout;
     private BottomNavigationView bottomNav;
     private TokenManager tokenManager;
@@ -898,6 +898,7 @@ https://smartgateway.hdfcbank.com/docs/hypercheckout-mobile-sdk/android/overview
         rowComplaint     = findViewById(R.id.row_complaint);
         rowAbout         = findViewById(R.id.row_about);
         rowTerms         = findViewById(R.id.row_terms);
+        btn_edit_profile = findViewById(R.id.btn_edit_profile);
     }
 
     // ── Bind user info from TokenManager ─────────────────────────────────────
@@ -913,6 +914,10 @@ https://smartgateway.hdfcbank.com/docs/hypercheckout-mobile-sdk/android/overview
 
         btnEditProfile.setOnClickListener(v ->
                 Toast.makeText(this, "Edit Profile", Toast.LENGTH_SHORT).show());
+        btn_edit_profile.setOnClickListener(v->{
+            Intent i = new Intent(AccountScreen.this, EditProfileActivity.class);
+            startActivity(i);
+        });
     }
 
     // ── Configure each menu row: icon, title, subtitle, click ────────────────
